@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Inventory</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a3045;
+    --accent: #4fffb0;
+    --accent2: #ff6b4a;
+    --accent3: #4ab4ff;
+    --text: #e8ecf4;
+    --muted: #6b7694;
+    --danger: #ff4a6b;
+    --warn: #ffb84a;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+  }
+
+  .logo-icon svg { color: #0f1117; }
+
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+
+  /* NAV TABS */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding: 0 24px;
+  }
+
+  .tab {
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* MAIN */
+  main {
+    flex: 1;
+    padding: 24px;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SCANNER */
+  .scanner-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .scanner-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .scanner-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  #scanner-viewport {
+    position: relative;
+    width: 100%;
+    max-height: 280px;
+    overflow: hidden;
+    background: #000;
+    display: none;
+  }
+
+  #scanner-viewport video,
+  #scanner-viewport canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  #scanner-viewport canvas.drawingBuffer {
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: scanMove 2s linear infinite;
+    z-index: 10;
+  }
+
+  @keyframes scanMove {
+    0% { top: 10%; }
+    50% { top: 85%; }
+    100% { top: 10%; }
+  }
+
+  .scan-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .scan-frame {
+    width: 200px;
+    height: 120px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);
+  }
+
+  .manual-input-row {
+    padding: 16px 18px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--accent);
+  }
+
+  .barcode-input {
+    flex: 1;
+    min-width: 180px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  /* BUTTONS */
+  .btn {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary { background: var(--accent); color: #0f1117; }
+  .btn-primary:hover { background: #3de89e; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #e03d5f; }
+  .btn-in { background: var(--accent3); color: #0f1117; }
+  .btn-in:hover { background: #3aa3ef; }
+  .btn-out { background: var(--accent2); color: #fff; }
+  .btn-out:hover { background: #e55c3a; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+  .btn-icon { padding: 8px 10px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.25s;
+    pointer-events: none;
+    max-width: 320px;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #toast.success { background: var(--accent); color: #0f1117; }
+  #toast.error { background: var(--danger); color: #fff; }
+  #toast.info { background: var(--accent3); color: #0f1117; }
+  #toast.warn { background: var(--warn); color: #0f1117; }
+
+  /* REGISTER FORM */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .form-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  /* INVENTORY TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .table-toolbar {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 160px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-ok { background: rgba(79,255,176,0.15); color: var(--accent); }
+  .badge-low { background: rgba(255,184,74,0.15); color: var(--warn); }
+  .badge-zero { background: rgba(255,74,107,0.15); color: var(--danger); }
+
+  .barcode-mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .empty-state {
+    padding: 48px 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-state svg { opacity: 0.3; margin-bottom: 12px; }
+  .empty-state p { font-size: 13px; }
+
+  /* LOG TABLE */
+  .log-in { color: var(--accent3); }
+  .log-out { color: var(--accent2); }
+  .log-register { color: var(--accent); }
+
+  /* MODAL */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    display: none;
+    place-items: center;
+    padding: 24px;
+  }
+
+  .modal-bg.open { display: grid; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 440px;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .modal-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+  }
+
+  /* SCAN mode indicator */
+  .mode-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .mode-register { background: rgba(79,255,176,0.12); color: var(--accent); }
+  .mode-in { background: rgba(74,180,255,0.12); color: var(--accent3); }
+  .mode-out { background: rgba(255,107,74,0.12); color: var(--accent2); }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  select option { background: var(--surface2); }
+
+  .qty-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .qty-input { width: 80px; text-align: center; }
+
+  .section-sep {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 24px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-sep::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Found item card */
+  .found-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .found-card.visible { display: block; }
+  .found-card .item-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .found-card .item-meta { font-size: 12px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* low stock threshold input */
+  .threshold-input { width: 72px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M3 5h18M3 12h18M3 19h18"/>
+      </svg>
+    </div>
+    Stock Control
+  </div>
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val" id="stat-total" style="color:var(--accent)">0</div>
+      <div class="stat-label">Products</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-units" style="color:var(--accent3)">0</div>
+      <div class="stat-label">Total Units</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-low" style="color:var(--warn)">0</div>
+      <div class="stat-label">Low Stock</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="stat-zero" style="color:var(--danger)">0</div>
+      <div class="stat-label">Out of Stock</div>
+    </div>
+  </div>
+  <div id="sync-status" style="font-size:11px;color:var(--muted);font-family:monospace;">Loading…</div>
+</header>
+
+<nav>
+  <button class="tab active" onclick="switchTab('scan')">📷 Scan</button>
+  <button class="tab" onclick="switchTab('inventory')">📦 Inventory</button>
+  <button class="tab" onclick="switchTab('log')">📋 Log</button>
+</nav>
+
+<main>
+
+  <!-- SCAN PANEL -->
+  <div class="panel active" id="panel-scan">
+
+    <div style="display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;">
+      <span style="font-size:13px; color:var(--muted); font-weight:500;">Mode:</span>
+      <button class="btn btn-secondary btn-sm" onclick="setScanMode('register')" id="mode-btn-register">
+        + Register Item
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="setScanMode('in')" id="mode-btn-in">
+        ↑ Stock In
+      </button>
+      <button class="btn btn-secondary btn-sm" onclick="setScanMode('out')" id="mode-btn-out">
+        ↓ Stock Out
+      </button>
+    </div>
+
+    <div class="scanner-wrap">
+      <div class="scanner-header">
+        <div class="scanner-title">Barcode Scanner</div>
+        <div id="mode-indicator" class="mode-pill mode-register">
+          <div class="dot"></div>
+          Register
+        </div>
+      </div>
+      <div id="scanner-viewport">
+        <div class="scan-line"></div>
+        <div class="scan-overlay"><div class="scan-frame"></div></div>
+      </div>
+      <div class="manual-input-row">
+        <input type="text" class="barcode-input" id="manual-barcode" placeholder="Scan or type barcode…" autocomplete="off" />
+        <button class="btn btn-secondary" onclick="toggleCamera()" id="camera-btn">📷 Camera</button>
+        <button class="btn btn-primary" onclick="handleBarcode()">Go</button>
+      </div>
+    </div>
+
+    <!-- REGISTER FORM (shown when mode=register and barcode found/new) -->
+    <div id="register-section" style="display:none;">
+      <div class="section-sep">New Item Details</div>
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Barcode</label>
+            <input type="text" id="reg-barcode" readonly style="opacity:0.6;" />
+          </div>
+          <div class="form-group full">
+            <label>Product Name *</label>
+            <input type="text" id="reg-name" placeholder="e.g. Tegaderm 6×7cm" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="reg-category">
+              <option value="">— Select —</option>
+              <option>Wound Care</option>
+              <option>Sutures</option>
+              <option>IV / Cannula</option>
+              <option>Drapes &amp; Draping</option>
+              <option>Anaesthetic Supplies</option>
+              <option>Instruments</option>
+              <option>PPE</option>
+              <option>Haemostasis</option>
+              <option>Irrigation</option>
+              <option>Neurosurgery</option>
+              <option>General Consumables</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Unit</label>
+            <select id="reg-unit">
+              <option>Each</option>
+              <option>Box</option>
+              <option>Pack</option>
+              <option>Roll</option>
+              <option>Pair</option>
+              <option>Bag</option>
+              <option>Vial</option>
+              <option>Ampoule</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Initial Quantity</label>
+            <input type="number" id="reg-qty" value="1" min="0" />
+          </div>
+          <div class="form-group">
+            <label>Low Stock Alert At</label>
+            <input type="number" id="reg-threshold" value="5" min="0" />
+          </div>
+          <div class="form-group full">
+            <label>Notes (optional)</label>
+            <input type="text" id="reg-notes" placeholder="Size, supplier, location…" />
+          </div>
+        </div>
+        <div style="margin-top:18px; display:flex; gap:10px;">
+          <button class="btn btn-primary" onclick="registerItem()">✓ Register Item</button>
+          <button class="btn btn-secondary" onclick="cancelRegister()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK IN/OUT SECTION -->
+    <div id="stockio-section" style="display:none;">
+      <div class="section-sep" id="stockio-label">Stock In</div>
+      <div class="found-card" id="found-card">
+        <div class="item-name" id="found-name"></div>
+        <div class="item-meta">
+          <span id="found-barcode"></span>
+          <span id="found-category"></span>
+          <span id="found-current"></span>
+        </div>
+      </div>
+      <div class="form-card" id="stockio-form" style="display:none;">
+        <div class="qty-row">
+          <label style="margin:0;">Quantity:</label>
+          <input type="number" class="qty-input" id="io-qty" value="1" min="1" />
+          <span id="io-unit" style="color:var(--muted); font-size:13px;"></span>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>Notes (optional)</label>
+          <input type="text" id="io-notes" placeholder="e.g. batch number, reason…" />
+        </div>
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button class="btn btn-in" id="btn-stock-in" onclick="doStockIn()" style="display:none;">↑ Stock In</button>
+          <button class="btn btn-out" id="btn-stock-out" onclick="doStockOut()" style="display:none;">↓ Stock Out</button>
+          <button class="btn btn-secondary" onclick="cancelIO()">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- INVENTORY PANEL -->
+  <div class="panel" id="panel-inventory">
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" class="search-input" id="inv-search" placeholder="Search name, barcode, category…" oninput="renderInventory()" />
+        <select id="inv-filter" onchange="renderInventory()" style="font-size:13px;">
+          <option value="">All</option>
+          <option value="low">Low Stock</option>
+          <option value="zero">Out of Stock</option>
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="confirmClearAll()">🗑 Clear All</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+      <div id="inv-table-container">
+        <div class="empty-state">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-4 0v2"/><line x1="12" y1="12" x2="12" y2="16"/>
+          </svg>
+          <p>No items yet. Scan a barcode to register your first item.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG PANEL -->
+  <div class="panel" id="panel-log">
+    <div class="table-wrap">
+      <div class="table-toolbar">
+        <input type="text" class="search-input" id="log-search" placeholder="Search log…" oninput="renderLog()" />
+        <button class="btn btn-danger btn-sm" onclick="confirmClearLog()">🗑 Clear Log</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportLogCSV()">⬇ Export CSV</button>
+      </div>
+      <div id="log-table-container">
+        <div class="empty-state"><p>No transactions yet.</p></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Item</div>
+    <input type="hidden" id="edit-barcode-val" />
+    <div class="form-grid" style="gap:12px; display:grid; grid-template-columns:1fr 1fr;">
+      <div class="form-group full">
+        <label>Name</label>
+        <input type="text" id="edit-name" />
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="edit-category">
+          <option value="">—</option>
+          <option>Wound Care</option><option>Sutures</option><option>IV / Cannula</option>
+          <option>Drapes &amp; Draping</option><option>Anaesthetic Supplies</option>
+          <option>Instruments</option><option>PPE</option><option>Haemostasis</option>
+          <option>Irrigation</option><option>Neurosurgery</option>
+          <option>General Consumables</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unit</label>
+        <select id="edit-unit">
+          <option>Each</option><option>Box</option><option>Pack</option>
+          <option>Roll</option><option>Pair</option><option>Bag</option>
+          <option>Vial</option><option>Ampoule</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="edit-qty" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Low Stock Threshold</label>
+        <input type="number" id="edit-threshold" min="0" />
+      </div>
+      <div class="form-group full">
+        <label>Notes</label>
+        <input type="text" id="edit-notes" />
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-bg" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--danger)">⚠️ Delete Item</div>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:6px;">Are you sure you want to delete <strong id="delete-name" style="color:var(--text)"></strong>? This cannot be undone.</p>
+    <input type="hidden" id="delete-barcode-val" />
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('delete-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="deleteItem()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLEAR ALL MODAL -->
+<div class="modal-bg" id="clear-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--danger)">⚠️ Clear All Inventory</div>
+    <p style="font-size:14px; color:var(--muted);">This will permanently delete all items and their stock history.</p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('clear-modal')">Cancel</button>
+      <button class="btn btn-danger" onclick="clearAll()">Clear Everything</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxxhIfNnmNs4jZ9uMPVYfPqJKglpWDUlDV2OEX3eHERv__oUUtAEhoOcLIBicpdI95-/exec';
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let db = { items: {}, log: [] };
+let scanMode = 'register';
+let currentBarcode = null;
+let cameraOn = false;
+
+// ─── API HELPERS ─────────────────────────────────────────────────────────────
+
+async function apiGet(params) {
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  const res = await fetch(url, { method: 'GET', redirect: 'follow' });
+  return await res.json();
+}
+
+async function apiPost(data) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'text/plain' },
+    redirect: 'follow'
+  });
+  return await res.json();
+}
+
+// ─── SYNC ────────────────────────────────────────────────────────────────────
+
+async function syncAll() {
+  showSync('Syncing…', '');
+  try {
+    const [itemsRes, logRes] = await Promise.all([
+      apiGet({ action: 'getAll' }),
+      apiGet({ action: 'getLog' })
+    ]);
+    if (itemsRes.success) db.items = itemsRes.items;
+    if (logRes.success)   db.log   = logRes.log;
+    updateStats();
+    renderInventory();
+    renderLog();
+    showSync('Synced ✓', 'var(--accent)');
+  } catch(e) {
+    showSync('Sync failed ✗', 'var(--danger)');
+    toast('Connection error — check network', 'error');
+  }
+}
+
+function showSync(msg, color) {
+  const el = document.getElementById('sync-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--muted)'; }
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+
+function switchTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'inventory') renderInventory();
+  if (name === 'log') renderLog();
+}
+
+// ─── SCAN MODE ───────────────────────────────────────────────────────────────
+
+function setScanMode(mode) {
+  scanMode = mode;
+  const labels  = { register: 'Register', in: 'Stock In', out: 'Stock Out' };
+  const classes = { register: 'mode-register', in: 'mode-in', out: 'mode-out' };
+  const ind = document.getElementById('mode-indicator');
+  ind.className = 'mode-pill ' + classes[mode];
+  ind.innerHTML = `<div class="dot"></div>${labels[mode]}`;
+  ['register','in','out'].forEach(m => {
+    const btn = document.getElementById('mode-btn-' + m);
+    btn.style.borderColor = m === mode ? 'var(--accent)' : '';
+    btn.style.color       = m === mode ? 'var(--accent)' : '';
+  });
+  cancelRegister();
+  cancelIO();
+  document.getElementById('manual-barcode').value = '';
+  document.getElementById('manual-barcode').focus();
+}
+
+setScanMode('register');
+
+// ─── CAMERA ──────────────────────────────────────────────────────────────────
+
+function toggleCamera() {
+  cameraOn ? stopCamera() : startCamera();
+}
+
+function startCamera() {
+  const vp = document.getElementById('scanner-viewport');
+  vp.style.display = 'block';
+  document.getElementById('camera-btn').textContent = '⏹ Stop';
+  Quagga.init({
+    inputStream: { name: 'Live', type: 'LiveStream', target: vp, constraints: { facingMode: 'environment' } },
+    decoder: { readers: ['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader','itf_reader','codabar_reader'] },
+    locate: true
+  }, err => {
+    if (err) {
+      toast('Camera error: ' + err.message, 'error');
+      vp.style.display = 'none';
+      document.getElementById('camera-btn').textContent = '📷 Camera';
+      return;
+    }
+    Quagga.start();
+    cameraOn = true;
+  });
+  let lastCode = '', lastTime = 0;
+  Quagga.onDetected(result => {
+    const code = result.codeResult.code;
+    const now = Date.now();
+    if (code === lastCode && now - lastTime < 2000) return;
+    lastCode = code; lastTime = now;
+    document.getElementById('manual-barcode').value = code;
+    handleBarcode();
+  });
+}
+
+function stopCamera() {
+  if (cameraOn) { Quagga.stop(); cameraOn = false; }
+  document.getElementById('scanner-viewport').style.display = 'none';
+  document.getElementById('camera-btn').textContent = '📷 Camera';
+}
+
+// ─── BARCODE HANDLER ─────────────────────────────────────────────────────────
+
+async function handleBarcode() {
+  const code = document.getElementById('manual-barcode').value.trim();
+  if (!code) { toast('Enter or scan a barcode first', 'warn'); return; }
+  stopCamera();
+  currentBarcode = code;
+
+  if (scanMode === 'register') {
+    if (db.items[code]) {
+      toast('Already registered: ' + db.items[code].name, 'info');
+      openEditModal(code);
+    } else {
+      showRegisterForm(code);
+    }
+  } else {
+    if (!db.items[code]) {
+      // Check sheet in case not yet synced
+      toast('Checking sheet…', 'info');
+      try {
+        const res = await apiGet({ action: 'getItem', barcode: code });
+        if (res.found) {
+          db.items[code] = res.item;
+          showStockIO(code);
+        } else {
+          toast('Unknown barcode — register first', 'error');
+          setScanMode('register');
+          document.getElementById('manual-barcode').value = code;
+          showRegisterForm(code);
+        }
+      } catch(e) {
+        toast('Connection error', 'error');
+      }
+      return;
+    }
+    showStockIO(code);
+  }
+}
+
+document.getElementById('manual-barcode').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleBarcode();
+});
+
+// ─── REGISTER ────────────────────────────────────────────────────────────────
+
+function showRegisterForm(code) {
+  document.getElementById('register-section').style.display = 'block';
+  document.getElementById('reg-barcode').value = code;
+  document.getElementById('reg-name').focus();
+}
+
+function cancelRegister() {
+  document.getElementById('register-section').style.display = 'none';
+  ['reg-name','reg-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('reg-category').value = '';
+  document.getElementById('reg-qty').value = '1';
+  document.getElementById('reg-threshold').value = '5';
+}
+
+async function registerItem() {
+  const barcode = document.getElementById('reg-barcode').value.trim();
+  const name    = document.getElementById('reg-name').value.trim();
+  if (!name) { toast('Product name is required', 'error'); return; }
+
+  const item = {
+    barcode, name,
+    category:  document.getElementById('reg-category').value,
+    unit:      document.getElementById('reg-unit').value,
+    qty:       parseInt(document.getElementById('reg-qty').value) || 0,
+    threshold: parseInt(document.getElementById('reg-threshold').value) || 5,
+    notes:     document.getElementById('reg-notes').value.trim()
+  };
+
+  toast('Saving…', 'info');
+  try {
+    const res = await apiPost({ action: 'register', ...item });
+    if (res.success) {
+      db.items[barcode] = { ...item, addedAt: new Date().toISOString() };
+      updateStats();
+      cancelRegister();
+      document.getElementById('manual-barcode').value = '';
+      toast(`✓ Registered: ${name}`, 'success');
+    } else {
+      toast('❌ ' + (res.error || 'Failed'), 'error');
+    }
+  } catch(e) {
+    toast('Connection error', 'error');
+  }
+}
+
+// ─── STOCK IN / OUT ──────────────────────────────────────────────────────────
+
+function showStockIO(code) {
+  const item = db.items[code];
+  document.getElementById('stockio-section').style.display = 'block';
+  document.getElementById('stockio-label').textContent = scanMode === 'in' ? 'Stock In' : 'Stock Out';
+  const fc = document.getElementById('found-card');
+  fc.classList.add('visible');
+  document.getElementById('found-name').textContent = item.name;
+  document.getElementById('found-barcode').textContent = '# ' + code;
+  document.getElementById('found-category').textContent = item.category || '';
+  document.getElementById('found-current').textContent = `Current: ${item.qty} ${item.unit}`;
+  document.getElementById('stockio-form').style.display = 'block';
+  document.getElementById('io-unit').textContent = item.unit;
+  document.getElementById('io-qty').value = 1;
+  document.getElementById('io-notes').value = '';
+  document.getElementById('btn-stock-in').style.display  = scanMode === 'in'  ? 'inline-flex' : 'none';
+  document.getElementById('btn-stock-out').style.display = scanMode === 'out' ? 'inline-flex' : 'none';
+  document.getElementById('io-qty').focus();
+}
+
+function cancelIO() {
+  document.getElementById('stockio-section').style.display = 'none';
+  document.getElementById('found-card').classList.remove('visible');
+  document.getElementById('stockio-form').style.display = 'none';
+}
+
+async function doStockIn() {
+  const qty = parseInt(document.getElementById('io-qty').value) || 0;
+  if (qty <= 0) { toast('Enter a quantity > 0', 'warn'); return; }
+  const item = db.items[currentBarcode];
+  toast('Saving…', 'info');
+  try {
+    const res = await apiPost({ action: 'stockIn', barcode: currentBarcode, name: item.name, qty, unit: item.unit, notes: document.getElementById('io-notes').value });
+    if (res.success) {
+      item.qty = res.newQty;
+      updateStats();
+      cancelIO();
+      document.getElementById('manual-barcode').value = '';
+      toast(`↑ Stocked in ${qty} × ${item.name}  (Now: ${res.newQty})`, 'success');
+    } else {
+      toast('❌ ' + (res.error || 'Failed'), 'error');
+    }
+  } catch(e) { toast('Connection error', 'error'); }
+}
+
+async function doStockOut() {
+  const qty = parseInt(document.getElementById('io-qty').value) || 0;
+  if (qty <= 0) { toast('Enter a quantity > 0', 'warn'); return; }
+  const item = db.items[currentBarcode];
+  if (qty > item.qty) { toast(`Only ${item.qty} in stock`, 'error'); return; }
+  toast('Saving…', 'info');
+  try {
+    const res = await apiPost({ action: 'stockOut', barcode: currentBarcode, name: item.name, qty, unit: item.unit, notes: document.getElementById('io-notes').value });
+    if (res.success) {
+      item.qty = res.newQty;
+      updateStats();
+      cancelIO();
+      document.getElementById('manual-barcode').value = '';
+      const msg = res.newQty === 0
+        ? `↓ ${qty} × ${item.name} — NOW OUT OF STOCK`
+        : `↓ ${qty} × ${item.name}  (Now: ${res.newQty})`;
+      toast(msg, res.newQty === 0 ? 'error' : (res.newQty <= item.threshold ? 'warn' : 'success'));
+    } else {
+      toast('❌ ' + (res.error || 'Failed'), 'error');
+    }
+  } catch(e) { toast('Connection error', 'error'); }
+}
+
+// ─── INVENTORY ───────────────────────────────────────────────────────────────
+
+function renderInventory() {
+  const q      = (document.getElementById('inv-search').value || '').toLowerCase();
+  const filter = document.getElementById('inv-filter').value;
+  let items = Object.values(db.items).filter(item => {
+    if (q && !item.name.toLowerCase().includes(q) && !item.barcode.includes(q) && !(item.category||'').toLowerCase().includes(q)) return false;
+    if (filter === 'low'  && item.qty > item.threshold) return false;
+    if (filter === 'zero' && item.qty > 0) return false;
+    return true;
+  });
+  const c = document.getElementById('inv-table-container');
+  if (!items.length) {
+    c.innerHTML = '<div class="empty-state"><p>No items match.</p></div>';
+    return;
+  }
+  items.sort((a,b) => a.name.localeCompare(b.name));
+  c.innerHTML = `<div style="overflow-x:auto;"><table>
+    <thead><tr><th>Name</th><th>Category</th><th>Barcode</th><th>Stock</th><th>Unit</th><th>Alert At</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    ${items.map(item => {
+      const badge = item.qty === 0
+        ? `<span class="badge badge-zero">${item.qty}</span>`
+        : item.qty <= item.threshold
+          ? `<span class="badge badge-low">${item.qty}</span>`
+          : `<span class="badge badge-ok">${item.qty}</span>`;
+      return `<tr>
+        <td style="font-weight:500">${item.name}</td>
+        <td style="color:var(--muted);font-size:12px;">${item.category||'—'}</td>
+        <td class="barcode-mono">${item.barcode}</td>
+        <td>${badge}</td>
+        <td style="font-size:12px;color:var(--muted);">${item.unit}</td>
+        <td style="font-size:12px;color:var(--muted);">${item.threshold}</td>
+        <td style="font-size:12px;color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.notes||'—'}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openEditModal('${item.barcode}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="openDeleteModal('${item.barcode}')">Del</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>`;
+}
+
+// ─── LOG ─────────────────────────────────────────────────────────────────────
+
+function renderLog() {
+  const q = (document.getElementById('log-search').value || '').toLowerCase();
+  let entries = db.log.filter(e =>
+    !q || e.name.toLowerCase().includes(q) || e.barcode.includes(q) || e.type.includes(q)
+  );
+  const c = document.getElementById('log-table-container');
+  if (!entries.length) { c.innerHTML = '<div class="empty-state"><p>No log entries.</p></div>'; return; }
+  const typeLabel = { register: '+ Register', in: '↑ In', out: '↓ Out' };
+  const typeClass = { register: 'log-register', in: 'log-in', out: 'log-out' };
+  c.innerHTML = `<table>
+    <thead><tr><th>Type</th><th>Item</th><th>Barcode</th><th>Qty</th><th>Notes</th><th>Time</th></tr></thead>
+    <tbody>
+    ${entries.map(e => `<tr>
+      <td><span class="${typeClass[e.type]}" style="font-weight:600;font-size:12px;">${typeLabel[e.type]||e.type}</span></td>
+      <td>${e.name}</td>
+      <td class="barcode-mono">${e.barcode}</td>
+      <td>${e.qty} ${e.unit}</td>
+      <td style="color:var(--muted);font-size:12px;">${e.notes||''}</td>
+      <td style="color:var(--muted);font-size:11px;white-space:nowrap;">${e.ts}</td>
+    </tr>`).join('')}
+    </tbody></table>`;
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+
+function updateStats() {
+  const items = Object.values(db.items);
+  document.getElementById('stat-total').textContent = items.length;
+  document.getElementById('stat-units').textContent = items.reduce((s,i) => s + (i.qty||0), 0);
+  document.getElementById('stat-low').textContent   = items.filter(i => i.qty > 0 && i.qty <= i.threshold).length;
+  document.getElementById('stat-zero').textContent  = items.filter(i => i.qty === 0).length;
+}
+
+// ─── MODALS ──────────────────────────────────────────────────────────────────
+
+function openEditModal(barcode) {
+  const item = db.items[barcode];
+  document.getElementById('edit-barcode-val').value  = barcode;
+  document.getElementById('edit-name').value         = item.name;
+  document.getElementById('edit-category').value     = item.category || '';
+  document.getElementById('edit-unit').value         = item.unit;
+  document.getElementById('edit-qty').value          = item.qty;
+  document.getElementById('edit-threshold').value    = item.threshold;
+  document.getElementById('edit-notes').value        = item.notes || '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveEdit() {
+  const barcode = document.getElementById('edit-barcode-val').value;
+  const name    = document.getElementById('edit-name').value.trim();
+  if (!name) { toast('Name required', 'error'); return; }
+  const updated = {
+    barcode, name,
+    category:  document.getElementById('edit-category').value,
+    unit:      document.getElementById('edit-unit').value,
+    qty:       parseInt(document.getElementById('edit-qty').value) || 0,
+    threshold: parseInt(document.getElementById('edit-threshold').value) || 5,
+    notes:     document.getElementById('edit-notes').value.trim()
+  };
+  try {
+    const res = await apiPost({ action: 'update', ...updated });
+    if (res.success) {
+      db.items[barcode] = { ...db.items[barcode], ...updated };
+      updateStats();
+      closeModal('edit-modal');
+      renderInventory();
+      toast('✓ Item updated', 'success');
+    } else {
+      toast('❌ ' + (res.error || 'Failed'), 'error');
+    }
+  } catch(e) { toast('Connection error', 'error'); }
+}
+
+function openDeleteModal(barcode) {
+  document.getElementById('delete-barcode-val').value = barcode;
+  document.getElementById('delete-name').textContent  = db.items[barcode].name;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+async function deleteItem() {
+  const barcode = document.getElementById('delete-barcode-val').value;
+  const name    = db.items[barcode].name;
+  try {
+    const res = await apiPost({ action: 'delete', barcode });
+    if (res.success) {
+      delete db.items[barcode];
+      updateStats();
+      closeModal('delete-modal');
+      renderInventory();
+      toast(`Deleted: ${name}`, 'warn');
+    } else {
+      toast('❌ ' + (res.error || 'Failed'), 'error');
+    }
+  } catch(e) { toast('Connection error', 'error'); }
+}
+
+function confirmClearAll() {
+  document.getElementById('clear-modal').classList.add('open');
+}
+
+async function clearAll() {
+  // Delete all items one by one
+  const barcodes = Object.keys(db.items);
+  for (const barcode of barcodes) {
+    await apiPost({ action: 'delete', barcode });
+  }
+  db.items = {};
+  db.log = [];
+  updateStats();
+  closeModal('clear-modal');
+  renderInventory();
+  renderLog();
+  toast('All data cleared', 'warn');
+}
+
+function confirmClearLog() {
+  if (!confirm('Clear all log entries?')) return;
+  toast('Log can only be cleared directly in Google Sheets', 'warn');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', e => {
+    if (e.target === bg) bg.classList.remove('open');
+  });
+});
+
+// ─── EXPORT ──────────────────────────────────────────────────────────────────
+
+function exportCSV() {
+  const rows = [['Name','Category','Barcode','Qty','Unit','Threshold','Notes','Added']];
+  Object.values(db.items).forEach(i => {
+    rows.push([i.name, i.category||'', i.barcode, i.qty, i.unit, i.threshold, i.notes||'', i.addedAt||'']);
+  });
+  downloadCSV(rows, 'inventory_' + today() + '.csv');
+}
+
+function exportLogCSV() {
+  const rows = [['Type','Item','Barcode','Qty','Unit','Notes','Timestamp']];
+  db.log.forEach(e => {
+    rows.push([e.type, e.name, e.barcode, e.qty, e.unit, e.notes||'', e.ts]);
+  });
+  downloadCSV(rows, 'stock_log_' + today() + '.csv');
+}
+
+function downloadCSV(rows, filename) {
+  const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+
+function today() { return new Date().toISOString().slice(0,10); }
+
+let toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+syncAll();
+
+</script>
+</body>
+</html>

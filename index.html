@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bollin Clinic — Theatre & Ward Data System</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Mono:wght@400;500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ── Bollin Clinic gold palette ── */
+    --gold:        #C9A84C;
+    --gold-light:  #E2C97E;
+    --gold-dim:    #9A7A32;
+    --gold-pale:   #F5EDD6;
+    --gold-glow:   rgba(201,168,76,.18);
+    --gold-border: rgba(201,168,76,.28);
+
+    /* ── Dark backgrounds ── */
+    --bg:          #0e0c09;
+    --bg-mid:      #161208;
+    --bg-card:     #1a1610;
+    --bg-card2:    #201b10;
+    --border:      rgba(201,168,76,.15);
+    --border-hover:rgba(201,168,76,.35);
+
+    /* ── Typography ── */
+    --white:       #f7f3eb;
+    --muted:       #9a9080;
+    --muted-light: #c4b89a;
+
+    /* ── Semantic ── */
+    --theatre:     #C9A84C;
+    --ward:        #8b7fbc;
+    --success:     #4caf82;
+    --danger:      #c0614a;
+    --radius:      10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Subtle gold grain texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 70% 50% at 15% 0%,   rgba(201,168,76,.06) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 40% at 85% 100%,  rgba(201,168,76,.04) 0%, transparent 70%);
+  }
+
+  .app {
+    position: relative; z-index: 1;
+    max-width: 860px; margin: 0 auto; padding: 0 20px 80px;
+  }
+
+  /* ══════════════════════════════════════
+     HEADER — Bollin Clinic branding
+  ══════════════════════════════════════ */
+  header {
+    text-align: center;
+    padding: 44px 0 36px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 36px;
+  }
+
+  .clinic-logo {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+    margin-bottom: 18px;
+  }
+  .logo-b {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px; font-weight: 300; line-height: 1;
+    background: linear-gradient(160deg, var(--gold-light) 0%, var(--gold) 50%, var(--gold-dim) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -2px;
+  }
+  .logo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 400; letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(160deg, var(--gold-light) 0%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .logo-tagline {
+    font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase;
+    color: var(--muted); font-weight: 400; margin-top: 2px;
+  }
+
+  .header-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto;
+  }
+
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(20px, 4vw, 30px);
+    font-weight: 300; letter-spacing: 1px;
+    color: var(--white); line-height: 1.3;
+  }
+  header h1 em {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { display: none; }
+
+  /* ══════════════════════════════════════
+     ROLE SELECTOR
+  ══════════════════════════════════════ */
+  .role-selector {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 24px;
+  }
+  .role-btn {
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    padding: 18px 20px; text-align: left;
+    transition: all .2s ease;
+    position: relative; overflow: hidden;
+  }
+  .role-btn::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent, var(--gold));
+    transition: width .2s ease;
+  }
+  .role-btn.active { border-color: var(--accent, var(--gold)); background: var(--bg-card2); }
+  .role-btn.active::before { width: 4px; }
+  .role-btn.theatre { --accent: var(--theatre); }
+  .role-btn.ward    { --accent: var(--ward); }
+  .role-icon { font-size: 20px; margin-bottom: 6px; }
+  .role-label {
+    font-size: 15px; font-weight: 500; display: block;
+    color: var(--white);
+  }
+  .role-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .3px; }
+  .role-btn.active .role-label { color: var(--accent, var(--gold)); }
+
+  /* ══════════════════════════════════════
+     STATUS BAR
+  ══════════════════════════════════════ */
+  .status-bar {
+    background: var(--gold-glow);
+    border: 1px solid var(--gold-border);
+    border-radius: 8px; padding: 9px 14px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .status-dot.green { background: var(--success); box-shadow: 0 0 5px var(--success); }
+  .status-dot.amber { background: var(--gold);    box-shadow: 0 0 5px var(--gold); }
+  .status-dot.red   { background: var(--danger);  box-shadow: 0 0 5px var(--danger); }
+  .status-text { color: var(--muted-light); font-size: 13px; }
+  .status-text strong { color: var(--white); }
+
+  /* ══════════════════════════════════════
+     SECTION TITLE
+  ══════════════════════════════════════ */
+  .section-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ══════════════════════════════════════
+     PATIENT LOOKUP
+  ══════════════════════════════════════ */
+  .patient-lookup {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 18px;
+  }
+  .search-row { display: flex; gap: 10px; align-items: flex-end; }
+  .search-row .field { flex: 1; }
+  .lookup-btn {
+    background: var(--gold-glow); border: 1px solid var(--gold-border);
+    color: var(--gold); border-radius: 8px;
+    padding: 9px 18px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: 'Jost', sans-serif;
+    transition: all .15s; white-space: nowrap; letter-spacing: .3px;
+  }
+  .lookup-btn:hover { background: rgba(201,168,76,.28); border-color: var(--gold); }
+
+  /* ══════════════════════════════════════
+     FORM FIELDS
+  ══════════════════════════════════════ */
+  .field-row { display: grid; gap: 12px; margin-bottom: 12px; }
+  .field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: 10px; font-weight: 500; letter-spacing: 1px;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .field input, .field select, .field textarea {
+    background: var(--bg-mid); border: 1px solid var(--border);
+    color: var(--white); border-radius: 8px;
+    padding: 9px 12px; font-size: 14px; font-family: 'Jost', sans-serif;
+    transition: border-color .15s, box-shadow .15s; width: 100%;
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201,168,76,.1);
+  }
+  .field input[readonly] {
+    background: rgba(201,168,76,.05);
+    border-color: rgba(201,168,76,.2);
+    color: var(--gold-light); cursor: not-allowed;
+  }
+
+  /* ══════════════════════════════════════
+     FORM CARDS
+  ══════════════════════════════════════ */
+  .form-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 16px;
+    position: relative;
+  }
+  .form-card.theatre-card { border-left: 2px solid var(--theatre); }
+  .form-card.ward-card    { border-left: 2px solid var(--ward); }
+  .form-card.shared-card  { border-left: 2px solid #3d3828; }
+
+  .ownership-tag {
+    position: absolute; top: 14px; right: 16px;
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 2px 10px; border-radius: 20px;
+  }
+  .ownership-tag.theatre { background: rgba(201,168,76,.12); color: var(--gold); }
+  .ownership-tag.ward    { background: rgba(139,127,188,.12); color: #a89fd4; }
+  .ownership-tag.shared  { background: rgba(80,70,50,.3); color: var(--muted); }
+
+  /* ══════════════════════════════════════
+     SUBMIT BUTTONS
+  ══════════════════════════════════════ */
+  .btn-submit {
+    width: 100%; padding: 13px; border: none; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dim));
+    color: #1a1508; font-family: 'Jost', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    letter-spacing: .8px; text-transform: uppercase;
+    transition: opacity .15s, transform .1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { opacity: .88; }
+  .btn-submit:active { transform: scale(.99); }
+  .btn-submit:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-submit.ward-btn {
+    background: linear-gradient(135deg, #a89fd4, #7b6fb8, #5f54a0);
+    color: var(--white);
+  }
+
+  /* ══════════════════════════════════════
+     RECORDS PANEL
+  ══════════════════════════════════════ */
+  .records-panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-top: 28px;
+  }
+  .record-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 5px;
+    background: var(--bg-mid); cursor: pointer;
+    transition: background .15s; border-left: 2px solid transparent;
+  }
+  .record-row:hover { background: rgba(201,168,76,.05); }
+  .record-row.partial  { border-left-color: var(--gold); }
+  .record-row.complete { border-left-color: var(--success); }
+  .rec-id   { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--gold); }
+  .rec-name { font-size: 14px; font-weight: 500; }
+  .rec-date { font-size: 12px; color: var(--muted); }
+  .rec-status {
+    font-size: 10px; font-family: 'DM Mono', monospace;
+    letter-spacing: 1px; padding: 2px 8px; border-radius: 10px;
+  }
+  .rec-status.partial  { background: rgba(201,168,76,.12); color: var(--gold); }
+  .rec-status.complete { background: rgba(76,175,130,.12); color: var(--success); }
+
+  /* ══════════════════════════════════════
+     INFO NOTE
+  ══════════════════════════════════════ */
+  .info-note {
+    background: rgba(139,127,188,.07); border: 1px solid rgba(139,127,188,.2);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; color: #a89fd4; line-height: 1.5; margin-bottom: 14px;
+  }
+
+  /* ══════════════════════════════════════
+     TOAST
+  ══════════════════════════════════════ */
+  .toast {
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card2); border: 1px solid var(--gold-border);
+    color: var(--white); padding: 11px 24px; border-radius: var(--radius);
+    font-size: 13px; opacity: 0; pointer-events: none;
+    transition: opacity .25s, transform .25s; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ══════════════════════════════════════
+     SPINNER
+  ══════════════════════════════════════ */
+  .spinner {
+    display: inline-block; width: 13px; height: 13px;
+    border: 2px solid rgba(255,255,255,.2);
+    border-top-color: var(--white); border-radius: 50%;
+    animation: spin .7s linear infinite; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ══════════════════════════════════════
+     HIDDEN CONFIG — bottom of page
+  ══════════════════════════════════════ */
+  .config-footer {
+    margin-top: 48px; padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .config-toggle {
+    background: none; border: none; color: var(--muted);
+    font-size: 11px; letter-spacing: 1px; cursor: pointer;
+    font-family: 'DM Mono', monospace; text-transform: uppercase;
+    opacity: .5; transition: opacity .2s;
+  }
+  .config-toggle:hover { opacity: 1; }
+  .config-panel {
+    display: none; margin-top: 14px; text-align: left;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px;
+  }
+  .config-panel.open { display: block; }
+  .config-panel label {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--muted); display: block; margin-bottom: 6px;
+  }
+  .config-panel input {
+    width: 100%; background: var(--bg-mid);
+    border: 1px solid var(--border); color: var(--white);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; font-family: 'DM Mono', monospace;
+  }
+  .config-panel input:focus { outline: none; border-color: var(--gold); }
+
+  /* ══════════════════════════════════════
+     FOOTER
+  ══════════════════════════════════════ */
+  .page-footer {
+    text-align: center; margin-top: 16px;
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); opacity: .4;
+  }
+
+  @media (max-width: 580px) {
+    .field-row.cols-2, .field-row.cols-3 { grid-template-columns: 1fr; }
+    .role-selector { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ HEADER ══ -->
+  <header>
+    <div class="clinic-logo" onclick="resetForm()" style="cursor:pointer;" title="Click to reset form">
+      <span class="logo-b">B</span>
+      <span class="logo-name">Bollin Clinic</span>
+      <span class="logo-tagline">Elevate Your Health &amp; Beauty</span>
+    </div>
+    <div class="header-divider"></div>
+    <h1>Theatre &amp; Ward <em>Data Recording</em></h1>
+    <p>Shared patient record &nbsp;·&nbsp; two-location entry &nbsp;·&nbsp; zero duplication</p>
+  </header>
+
+  <!-- ══ ROLE SELECTOR ══ -->
+  <div class="role-selector">
+    <label class="role-btn theatre active" id="roleTheatre">
+      <input type="radio" name="role" value="theatre" checked hidden>
+      <div class="role-icon">🏥</div>
+      <span class="role-label">Theatre Staff</span>
+      <div class="role-sub">Columns A–Q · intra-operative data</div>
+    </label>
+    <label class="role-btn ward" id="roleWard">
+      <input type="radio" name="role" value="ward" hidden>
+      <div class="role-icon">🛏️</div>
+      <span class="role-label">Ward Staff</span>
+      <div class="role-sub">Columns R–U · post-operative data</div>
+    </label>
+  </div>
+
+  <!-- ══ STATUS BAR ══ -->
+  <div class="status-bar">
+    <div class="status-dot amber" id="statusDot"></div>
+    <div class="status-text" id="statusText">No patient selected — search by ID or name, or fill in a new record</div>
+  </div>
+
+  <!-- ══ PATIENT LOOKUP ══ -->
+  <div class="patient-lookup">
+    <div class="section-title">Patient Identification</div>
+    <div class="search-row">
+      <div class="field">
+        <label>Patient ID Number</label>
+        <input type="text" id="pidInput" placeholder="Hospital number" onkeydown="if(event.key==='Enter') lookupPatient()">
+      </div>
+      <button class="lookup-btn" onclick="lookupPatient()">Look up</button>
+    </div>
+    <div id="searchResults" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- ══════════ THEATRE SECTION ══════════ -->
+  <div id="theatreSection">
+
+    <div class="form-card theatre-card">
+      <div class="ownership-tag theatre">Theatre · Cols A–D</div>
+      <div class="section-title">List Details</div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Date</label><input type="date" id="t_date"></div>
+        <div class="field">
+          <label>Theatre Number</label>
+          <select id="t_theatreNumber">
+            <option value="" disabled selected>Select location</option>
+            <option>Theatre 1</option>
+            <option>Theatre 2</option>
+            <option>Treatment Room 1</option>
+            <option>Treatment Room 2</option>
+            <option>Treatment Room 3</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field">
+          <label>Proposed List Order</label>
+          <select id="t_proposedOrder">
+            <option value="" disabled selected>Select</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Actual List Order</label>
+          <select id="t_actualList">
+            <option value="" disabled selected>Select</option>
+            <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+            <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card theatre-card">
+      <div class="ownership-tag theatre">Theatre · Cols E–J</div>
+      <div class="section-title">Patient Details</div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Patient ID Number *</label><input type="text" id="t_pid" placeholder="Hospital number — required"></div>
+        <div class="field"><label>Patient Name</label><input type="text" id="t_patientName" placeholder="Full name"></div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Date of Birth</label><input type="date" id="t_dob"></div>
+        <div class="field"><label>Procedure</label><input type="text" id="t_procedure" placeholder="Describe the procedure"></div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Surgeon Name</label><input type="text" id="t_surgeonName" placeholder="Operating surgeon"></div>
+        <div class="field"><label>Anaesthetist Name</label><input type="text" id="t_anaesthetistName" placeholder="Anaesthetist"></div>
+      </div>
+    </div>
+
+    <div class="form-card theatre-card">
+      <div class="ownership-tag theatre">Theatre · Cols K–Q</div>
+      <div class="section-title">Intra-operative Timings</div>
+      <div class="field-row cols-3">
+        <div class="field"><label>Time Sent</label><input type="time" id="t_timeSent"></div>
+        <div class="field"><label>Time into Theatre</label><input type="time" id="t_intoTheatre"></div>
+        <div class="field"><label>Anaesthetic Started</label><input type="time" id="t_anaStarted"></div>
+      </div>
+      <div class="field-row cols-3">
+        <div class="field"><label>Anaesthetic Ready</label><input type="time" id="t_anaReady"></div>
+        <div class="field"><label>Knife to Skin</label><input type="time" id="t_knifeToSkin"></div>
+        <div class="field"><label>Finished Suturing</label><input type="time" id="t_finishedSuturing"></div>
+      </div>
+      <div class="field-row cols-1">
+        <div class="field"><label>Time into Recovery</label><input type="time" id="t_intoRecovery"></div>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="theatreSubmit" onclick="submitTheatre()">
+      Save Theatre Record
+    </button>
+  </div>
+
+  <!-- ══════════ WARD SECTION ══════════ -->
+  <div id="wardSection" style="display:none;">
+
+    <div class="info-note">
+      ℹ️ Search for the patient by ID above to load their theatre record. Only the ward fields (Cols R–U) can be edited here — theatre data is locked.
+    </div>
+
+    <div class="form-card shared-card">
+      <div class="ownership-tag shared">Read-only · Theatre</div>
+      <div class="section-title">Patient Details (Theatre-recorded)</div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Patient ID</label><input type="text" id="w_pid" readonly placeholder="Load from theatre record"></div>
+        <div class="field"><label>Patient Name</label><input type="text" id="w_patientName" readonly placeholder="Load from theatre record"></div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Date of Birth</label><input type="text" id="w_dob" readonly placeholder="Load from theatre record"></div>
+        <div class="field"><label>Procedure</label><input type="text" id="w_procedure" readonly placeholder="Load from theatre record"></div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Surgeon Name</label><input type="text" id="w_surgeonName" readonly placeholder="Load from theatre record"></div>
+        <div class="field"><label>Anaesthetist Name</label><input type="text" id="w_anaesthetistName" readonly placeholder="Load from theatre record"></div>
+      </div>
+    </div>
+
+    <div class="form-card ward-card">
+      <div class="ownership-tag ward">Ward · Cols R–U</div>
+      <div class="section-title">Post-operative Data</div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Time out of Recovery</label><input type="time" id="w_outRecovery"></div>
+        <div class="field"><label>Time into Ward</label><input type="time" id="w_intoWard"></div>
+      </div>
+      <div class="field-row cols-2">
+        <div class="field"><label>Time of Discharge</label><input type="time" id="w_timeDischarge"></div>
+        <div class="field"><label>Date of Discharge</label><input type="date" id="w_dateDischarge"></div>
+      </div>
+    </div>
+
+    <button class="btn-submit ward-btn" id="wardSubmit" onclick="submitWard()">
+      Save Ward Record
+    </button>
+  </div>
+
+  <!-- Records panel removed for privacy -->
+
+  <div class="page-footer">Bollin Clinic &nbsp;·&nbsp; Theatre &amp; Ward Data System</div>
+
+</div><!-- /app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ───────────────────────────────────────────────
+let SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz73ExLzad1B3nsDjH9zXZ0J2q5x8OOGgt5mRR0oRcO0pNEjC4nyAxmmqJJmoYztFJJ/exec';
+
+window.addEventListener('load', () => {
+  // records panel removed for privacy
+});
+
+function saveScriptUrl() {}
+function toggleConfig() {}
+
+function toggleConfig() {
+  document.getElementById('configPanel').classList.toggle('open');
+}
+
+// ── Reset form to blank for next patient ─────────────────
+function resetForm() {
+  currentPid = null;
+  // Reset theatre fields
+  ['t_date','t_theatreNumber','t_proposedOrder','t_actualList',
+   't_pid','t_patientName','t_dob','t_procedure','t_surgeonName','t_anaesthetistName',
+   't_timeSent','t_intoTheatre','t_anaStarted','t_anaReady',
+   't_knifeToSkin','t_finishedSuturing','t_intoRecovery'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Reset ward fields
+  ['w_pid','w_patientName','w_dob','w_procedure','w_surgeonName','w_anaesthetistName',
+   'w_outRecovery','w_intoWard','w_timeDischarge','w_dateDischarge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  resetStatus();
+  clearSearch();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── State ────────────────────────────────────────────────
+let currentRole = 'theatre';
+let currentPid  = null;
+
+// ── Role switching ───────────────────────────────────────
+document.querySelectorAll('.role-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentRole = btn.querySelector('input').value;
+    document.getElementById('theatreSection').style.display = currentRole === 'theatre' ? 'block' : 'none';
+    document.getElementById('wardSection').style.display   = currentRole === 'ward'    ? 'block' : 'none';
+    resetStatus(); clearSearch();
+  });
+});
+
+// ── API calls ────────────────────────────────────────────
+async function callScript(params) {
+  if (!SCRIPT_URL) {
+    showToast('⚠️ Open System Settings at the bottom and paste your Apps Script URL');
+    return null;
+  }
+  const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+  try {
+    const res  = await fetch(url, { method: 'GET', redirect: 'follow' });
+    return await res.json();
+  } catch (err) {
+    showToast('❌ Connection error — check System Settings');
+    console.error(err); return null;
+  }
+}
+
+async function postScript(data) {
+  if (!SCRIPT_URL) {
+    showToast('⚠️ Open System Settings at the bottom and paste your Apps Script URL');
+    return null;
+  }
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'text/plain' },
+      redirect: 'follow'
+    });
+    return await res.json();
+  } catch (err) {
+    showToast('❌ Connection error — check System Settings');
+    console.error(err); return null;
+  }
+}
+
+// ── Lookup ───────────────────────────────────────────────
+async function lookupPatient() {
+  const pid = document.getElementById('pidInput').value.trim();
+  if (!pid) { showToast('⚠️ Enter a Patient ID to search'); return; }
+  updateStatus('amber', '<span class="spinner"></span> Searching...');
+  const res = await callScript({ action: 'getRecord', pid });
+  if (!res) return;
+  if (res.found) {
+    renderSearchResult(res.record);
+  } else {
+    document.getElementById('searchResults').innerHTML =
+      '<div style="font-size:13px;color:var(--muted);padding:6px 0;">No record found for that ID</div>';
+    resetStatus();
+  }
+}
+
+// ── Save theatre ─────────────────────────────────────────
+async function submitTheatre() {
+  const pid = document.getElementById('t_pid').value.trim();
+  if (!pid) { showToast('⚠️ Patient ID is required (Col E)'); return; }
+  setButtonLoading('theatreSubmit', true, 'Saving...');
+  const data = {
+    action: 'saveTheatre',
+    date: v('t_date'), theatreNumber: v('t_theatreNumber'),
+    proposedOrder: v('t_proposedOrder'), actualList: v('t_actualList'),
+    pid, patientName: v('t_patientName'), dob: v('t_dob'),
+    procedure: v('t_procedure'), surgeonName: v('t_surgeonName'),
+    anaesthetistName: v('t_anaesthetistName'),
+    timeSent: v('t_timeSent'), intoTheatre: v('t_intoTheatre'),
+    anaStarted: v('t_anaStarted'), anaReady: v('t_anaReady'),
+    knifeToSkin: v('t_knifeToSkin'), finishedSuturing: v('t_finishedSuturing'),
+    intoRecovery: v('t_intoRecovery')
+  };
+  const res = await postScript(data);
+  setButtonLoading('theatreSubmit', false, 'Save Theatre Record');
+  if (res && res.success) {
+    currentPid = pid;
+    updateStatus('green', `Theatre record ${res.action === 'created' ? 'created' : 'updated'} for <strong>${data.patientName || pid}</strong>`);
+    showToast(res.action === 'created' ? '✓ New theatre record saved' : '✓ Theatre record updated');
+    setTimeout(() => resetForm(), 1500);
+  } else {
+    showToast('❌ ' + (res?.error || 'Save failed'));
+  }
+}
+
+// ── Save ward ────────────────────────────────────────────
+async function submitWard() {
+  const pid = document.getElementById('w_pid').value.trim();
+  if (!pid) { showToast('⚠️ Please load a patient record first'); return; }
+  setButtonLoading('wardSubmit', true, 'Saving...');
+  const data = {
+    action: 'saveWard', pid,
+    outRecovery: v('w_outRecovery'),
+    intoWard: v('w_intoWard'),
+    timeDischarge: v('w_timeDischarge'),
+    dateDischarge: v('w_dateDischarge')
+  };
+  const res = await postScript(data);
+  setButtonLoading('wardSubmit', false, 'Save Ward Record');
+  if (res && res.success) {
+    currentPid = pid;
+    updateStatus('green', res.isComplete
+      ? 'Record complete — both theatre and ward sections saved'
+      : 'Ward record saved');
+    showToast(res.isComplete ? '✓ Record complete' : '✓ Ward record saved');
+    setTimeout(() => resetForm(), 1500);
+  } else {
+    showToast('❌ ' + (res?.error || 'Save failed'));
+    updateStatus('red', res?.error || 'Save failed');
+  }
+}
+
+// ── Load all records ─────────────────────────────────────
+async function loadAllRecords() {
+  const res = await callScript({ action: 'getAllRecords' });
+  if (!res || !res.records) return;
+  renderRecordsList(res.records);
+}
+
+// ── Load a record into the form ──────────────────────────
+function loadRecord(record) {
+  currentPid = record.pid;
+  if (currentRole === 'theatre') {
+    setVal('t_date',             record.date);
+    setVal('t_theatreNumber',    record.theatreNumber);
+    setVal('t_proposedOrder',    record.proposedOrder);
+    setVal('t_actualList',       record.actualList);
+    setVal('t_pid',              record.pid);
+    setVal('t_patientName',      record.patientName);
+    setVal('t_dob',              record.dob);
+    setVal('t_procedure',        record.procedure);
+    setVal('t_surgeonName',      record.surgeonName);
+    setVal('t_anaesthetistName', record.anaesthetistName);
+    setVal('t_timeSent',         record.timeSent);
+    setVal('t_intoTheatre',      record.intoTheatre);
+    setVal('t_anaStarted',       record.anaStarted);
+    setVal('t_anaReady',         record.anaReady);
+    setVal('t_knifeToSkin',      record.knifeToSkin);
+    setVal('t_finishedSuturing', record.finishedSuturing);
+    setVal('t_intoRecovery',     record.intoRecovery);
+    updateStatus('amber', `Editing theatre record for <strong>${record.patientName || record.pid}</strong>`);
+  }
+  if (currentRole === 'ward') {
+    setVal('w_pid',              record.pid);
+    setVal('w_patientName',      record.patientName);
+    setVal('w_dob',              record.dob);
+    setVal('w_procedure',        record.procedure);
+    setVal('w_surgeonName',      record.surgeonName);
+    setVal('w_anaesthetistName', record.anaesthetistName);
+    setVal('w_outRecovery',   record.outRecovery);
+    setVal('w_intoWard',      record.intoWard);
+    setVal('w_timeDischarge', record.timeDischarge);
+    setVal('w_dateDischarge', record.dateDischarge);
+    updateStatus(record.hasTheatre ? 'green' : 'amber',
+      record.hasTheatre
+        ? `Theatre record found for <strong>${record.patientName || record.pid}</strong> — complete the ward fields`
+        : `No theatre data yet for <strong>${record.patientName || record.pid}</strong>`
+    );
+  }
+  clearSearch();
+}
+
+// ── Render helpers ───────────────────────────────────────
+function renderSearchResult(record) {
+  const hasT = record.hasTheatre, hasW = record.hasWard;
+  const status = (hasT && hasW) ? 'complete' : 'partial';
+  const enc = encodeURIComponent(JSON.stringify(record));
+  document.getElementById('searchResults').innerHTML = `
+    <div class="record-row ${status}" onclick="loadRecord(JSON.parse(decodeURIComponent('${enc}')))">
+      <span class="rec-id">${record.pid}</span>
+      <span><span class="rec-name">${record.patientName || '—'}</span>
+      <span class="rec-date" style="margin-left:8px;">${record.date || ''}</span></span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:11px;color:${hasT?'var(--theatre)':'var(--muted)'}">🏥${hasT?' ✓':' —'}</span>
+        <span style="font-size:11px;color:${hasW?'var(--ward)':'var(--muted)'}">🛏${hasW?' ✓':' —'}</span>
+        <span class="rec-status ${status}">${status==='complete'?'✓ Complete':'⏳ Partial'}</span>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--gold);margin-top:4px;padding-left:4px;">↑ Click to load this record</div>`;
+  updateStatus('green', `Record found for <strong>${record.patientName || record.pid}</strong> — click to load`);
+}
+
+function renderSearchResults(records) {
+  document.getElementById('searchResults').innerHTML = records.map(r => {
+    const hasT = r.hasTheatre, hasW = r.hasWard;
+    const status = (hasT && hasW) ? 'complete' : 'partial';
+    const enc = encodeURIComponent(JSON.stringify(r));
+    return `<div class="record-row ${status}" onclick="loadRecord(JSON.parse(decodeURIComponent('${enc}')))">
+      <span class="rec-id">${r.pid}</span>
+      <span class="rec-name">${r.patientName || '—'}</span>
+      <span class="rec-status ${status}">${status==='complete'?'✓ Complete':'⏳ Partial'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderRecordsList(records) {
+  const list = document.getElementById('recordsList');
+  const none = document.getElementById('noRecords');
+  if (!records || !records.length) { list.innerHTML=''; none.style.display='block'; return; }
+  none.style.display = 'none';
+  list.innerHTML = records.map(r => {
+    const hasT = r.hasTheatre, hasW = r.hasWard;
+    const status = (hasT && hasW) ? 'complete' : 'partial';
+    const enc = encodeURIComponent(JSON.stringify(r));
+    return `<div class="record-row ${status}" onclick="loadAndSwitch(JSON.parse(decodeURIComponent('${enc}')))">
+      <span class="rec-id">${r.pid}</span>
+      <span>
+        <span class="rec-name">${r.patientName || '—'}</span>
+        <span class="rec-date" style="margin-left:8px;">${r.date || ''} ${r.theatreNumber ? '· '+r.theatreNumber : ''}</span>
+      </span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span style="font-size:11px;color:${hasT?'var(--theatre)':'var(--muted)'}">🏥${hasT?' ✓':' —'}</span>
+        <span style="font-size:11px;color:${hasW?'var(--ward)':'var(--muted)'}">🛏${hasW?' ✓':' —'}</span>
+        <span class="rec-status ${status}">${status==='complete'?'✓ Complete':'⏳ Partial'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadAndSwitch(summary) {
+  const res = await callScript({ action: 'getRecord', pid: summary.pid });
+  if (res && res.found) loadRecord(res.record);
+}
+
+// ── Utilities ────────────────────────────────────────────
+function v(id)         { return document.getElementById(id)?.value?.trim() || ''; }
+function setVal(id, v) { const el = document.getElementById(id); if (el) el.value = v || ''; }
+
+function updateStatus(type, text) {
+  document.getElementById('statusDot').className = `status-dot ${type}`;
+  document.getElementById('statusText').innerHTML = text;
+}
+function resetStatus() {
+  updateStatus('amber', 'No patient selected — search by ID or name, or fill in a new record');
+}
+function clearSearch() {
+  document.getElementById('searchResults').innerHTML = '';
+  document.getElementById('pidInput').value = '';
+}
+function setButtonLoading(id, loading, label) {
+  const btn = document.getElementById(id);
+  btn.disabled  = loading;
+  btn.innerHTML = loading ? `<span class="spinner"></span> ${label}` : label;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
