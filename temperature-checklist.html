@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bollin Clinic — Clinical Monitoring</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:       #0d1b2a;
+    --navy2:      #162433;
+    --navy3:      #1e3347;
+    --gold:       #b8965a;
+    --gold-light: #d4af7a;
+    --gold-pale:  #f9f3ea;
+    --teal:       #1a7f8e;
+    --teal-pale:  #e8f7f9;
+    --green:      #2ecc71;
+    --amber:      #e8a020;
+    --red:        #e74c3c;
+    --slate:      #4a6278;
+    --silver:     #c8d6e0;
+    --off-white:  #f7f4f0;
+    --white:      #ffffff;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--navy);
+    min-height: 100vh;
+    color: var(--navy);
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--navy);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    border-bottom: 1px solid var(--navy3);
+  }
+  .logo-mark {
+    width: 42px; height: 42px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gold);
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+  .header-text { display: flex; flex-direction: column; gap: 1px; }
+  .header-text .clinic-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: 0.03em;
+    line-height: 1;
+  }
+  .header-text .clinic-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+  }
+  .header-right {
+    margin-left: auto;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--slate);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: right;
+    line-height: 1.4;
+  }
+  .header-right span { display: block; color: var(--gold-light); font-size: 9px; }
+
+  /* ── Tab bar ── */
+  .tab-bar {
+    background: var(--navy2);
+    display: flex;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--navy3);
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 11px 15px;
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--slate);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .tab-btn.active {
+    color: var(--gold-light);
+    border-bottom-color: var(--gold);
+  }
+  .tab-btn:hover:not(.active) { color: var(--silver); }
+
+  /* ── Main content ── */
+  .content {
+    background: var(--off-white);
+    min-height: calc(100vh - 120px);
+    padding: 20px 16px 40px;
+  }
+
+  /* ── Section header ── */
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+  .date-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--gold-pale);
+    color: var(--gold);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  /* ── Location selector ── */
+  .location-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.07);
+  }
+  .location-card label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--slate);
+    display: block;
+    margin-bottom: 8px;
+  }
+  .location-select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--silver);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--navy);
+    background: var(--off-white);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234a6278' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .location-select:focus { outline: none; border-color: var(--gold); }
+
+  /* ── Checklist card ── */
+  .checklist-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 6px rgba(13,27,42,0.07);
+  }
+  .checklist-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--gold);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--gold-pale);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .checklist-card h3 svg { flex-shrink: 0; }
+
+  /* ── Reading row ── */
+  .reading-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .reading-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.3;
+  }
+  .reading-label small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--slate);
+    margin-top: 1px;
+  }
+  .temp-input {
+    width: 76px;
+    padding: 8px 10px;
+    border: 1.5px solid var(--silver);
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    color: var(--navy);
+    background: var(--off-white);
+    transition: border-color 0.2s, background 0.2s;
+    -moz-appearance: textfield;
+  }
+  .temp-input::-webkit-outer-spin-button,
+  .temp-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .temp-input:focus { outline: none; border-color: var(--gold); background: var(--white); }
+  .temp-input.ok { border-color: var(--green); background: #f0fff7; }
+  .temp-input.warn { border-color: var(--amber); background: #fffbf0; }
+  .temp-input.fail { border-color: var(--red); background: #fff5f5; }
+
+  .status-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--silver);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .status-dot.ok { background: var(--green); }
+  .status-dot.warn { background: var(--amber); }
+  .status-dot.fail { background: var(--red); }
+
+  /* ── Signature / notes row ── */
+  .meta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #eef2f5;
+  }
+  .meta-field label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--slate);
+    display: block;
+    margin-bottom: 5px;
+  }
+  .meta-field input, .meta-field select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--silver);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--off-white);
+  }
+  .meta-field input:focus, .meta-field select:focus { outline: none; border-color: var(--gold); }
+
+  .notes-field {
+    grid-column: 1 / -1;
+  }
+  .notes-field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1.5px solid var(--silver);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--navy);
+    background: var(--off-white);
+    resize: vertical;
+    min-height: 60px;
+  }
+  .notes-field textarea:focus { outline: none; border-color: var(--gold); }
+
+  /* ── Summary bar ── */
+  .summary-bar {
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--silver);
+    font-weight: 500;
+  }
+  .summary-item .count {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+  }
+  .summary-item.ok .count { color: var(--green); }
+  .summary-item.warn .count { color: var(--amber); }
+  .summary-item.fail .count { color: var(--red); }
+
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: var(--gold);
+    color: var(--white);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.2s, transform 0.1s;
+    margin-top: 4px;
+  }
+  .submit-btn:active { transform: scale(0.98); }
+  .submit-btn:hover { background: var(--gold-light); }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy);
+    color: var(--white);
+    padding: 12px 22px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    border-left: 4px solid var(--green);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── Range labels ── */
+  .range-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--gold-pale);
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  /* ── Hidden ── */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Coming soon ── */
+  .coming-soon {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--slate);
+  }
+  .coming-soon svg { opacity: 0.35; margin-bottom: 14px; }
+  .coming-soon h3 { font-size: 17px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+  .coming-soon p { font-size: 14px; line-height: 1.6; }
+
+  /* ── Records table ── */
+  .records-list { display: flex; flex-direction: column; gap: 10px; }
+  .record-item {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 13px 15px;
+    box-shadow: 0 1px 5px rgba(13,27,42,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .record-item .rec-left h4 { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .record-item .rec-left span { font-size: 12px; color: var(--slate); font-family: 'DM Mono', monospace; }
+  .rec-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .rec-status.ok { background: #e8faf2; color: #219a52; }
+  .rec-status.warn { background: #fff8e6; color: #b37a0e; }
+  .rec-status.fail { background: #feeceb; color: #c0392b; }
+  /* ── Hand Hygiene ── */
+  .outcome-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .outcome-btn {
+    flex: 1;
+    min-width: 90px;
+    padding: 10px 8px;
+    border: 2px solid var(--silver);
+    border-radius: 10px;
+    background: var(--off-white);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .outcome-btn.compliant.selected  { background:#e8faf2; border-color:var(--green); color:#1a7a44; }
+  .outcome-btn.non-compliant.selected { background:#fff0ef; border-color:var(--red); color:#c0392b; }
+  .outcome-btn.missed.selected     { background:#fff8e6; border-color:var(--amber); color:#9a6010; }
+  .outcome-btn:hover { border-color: var(--gold); }
+
+  .hh-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 9px;
+  }
+  .hh-cat-label {
+    width: 96px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+    flex-shrink: 0;
+  }
+  .hh-cat-bar-wrap {
+    flex: 1;
+    height: 7px;
+    background: #eef2f5;
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .hh-cat-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.4s, background 0.4s;
+  }
+  .hh-cat-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    width: 38px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .hh-cat-count {
+    font-size: 11px;
+    color: var(--slate);
+    width: 40px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .obs-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid #f0f3f6;
+    font-size: 12px;
+  }
+  .obs-row:last-child { border-bottom: none; }
+  .obs-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--slate);
+    width: 20px;
+    flex-shrink: 0;
+  }
+  .obs-cat {
+    font-weight: 600;
+    color: var(--navy);
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .obs-moment {
+    flex: 1;
+    color: var(--slate);
+    font-size: 11px;
+  }
+  .obs-badge {
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .obs-badge.compliant    { background:#e8faf2; color:#1a7a44; }
+  .obs-badge.non-compliant { background:#fff0ef; color:#c0392b; }
+  .obs-badge.missed       { background:#fff8e6; color:#9a6010; }
+  .obs-del {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--silver);
+    font-size: 14px;
+    padding: 0 2px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  /* ── Theatre Cleaning ── */
+  .cleaning-phase-toggle {
+    display: flex;
+    background: #eef2f5;
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 16px;
+    gap: 3px;
+  }
+  .phase-btn {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slate);
+    background: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .phase-btn.active { background: var(--white); color: var(--navy); box-shadow: 0 1px 4px rgba(13,27,42,0.1); }
+
+  .clean-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid #f0f3f6;
+  }
+  .clean-item:last-of-type { border-bottom: none; }
+  .clean-item-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--navy);
+  }
+  .clean-check {
+    width: 20px; height: 20px;
+    accent-color: var(--gold);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .not-in-use-section {
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .not-in-use-section h4 {
+    color: var(--gold-light);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 12px;
+  }
+  .date-range-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .date-range-row label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--slate);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .date-range-row input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1.5px solid var(--navy3);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--white);
+    background: var(--navy2);
+  }
+  .date-range-row input:focus { outline: none; border-color: var(--gold); }
+  .niu-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--navy3);
+    color: var(--silver);
+    border: 1.5px solid var(--navy3);
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .niu-btn:hover { border-color: var(--gold); color: var(--gold-light); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">B</div>
+  <div class="header-text">
+    <div class="clinic-name">Bollin Clinic</div>
+    <div class="clinic-tagline">Elevate Your Health &amp; Beauty</div>
+  </div>
+  <div class="header-right">
+    Clinical Monitoring
+    <span>Hub</span>
+  </div>
+</header>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('temperature', this)">🌡 Temperature</button>
+  <button class="tab-btn" onclick="switchTab('fridge', this)">🧊 Fridge</button>
+  <button class="tab-btn" onclick="switchTab('fluid', this)">💧 Fluid Warmer</button>
+  <button class="tab-btn" onclick="switchTab('records', this)">📋 Records</button>
+  <button class="tab-btn" onclick="switchTab('hygiene', this)">🖐 Hand Hygiene</button>
+  <button class="tab-btn" onclick="switchTab('cleaning', this)">🧹 Theatre Cleaning</button>
+</div>
+
+<!-- ═══════════════════ TEMPERATURE TAB ═══════════════════ -->
+<div class="content">
+<div id="tab-temperature" class="tab-panel active">
+
+  <div class="section-header">
+    <div class="section-title">Temperature Check</div>
+    <div class="date-badge" id="temp-date"></div>
+  </div>
+
+  <div class="location-card">
+    <label>Select Location</label>
+    <select class="location-select" id="location-select" onchange="renderTempForm()">
+      <option value="">— Choose a location —</option>
+      <option value="store1">Store Room 1</option>
+      <option value="store2">Store Room 2</option>
+      <option value="theatre1">Theatre 1</option>
+      <option value="theatre2">Theatre 2</option>
+      <option value="medicines">Medicines Room</option>
+    </select>
+  </div>
+
+  <div id="temp-form-area"></div>
+
+</div>
+
+<!-- ═══════════════════ FRIDGE TAB ═══════════════════ -->
+<div id="tab-fridge" class="tab-panel">
+
+  <div class="section-header">
+    <div class="section-title">Fridge Temperature</div>
+    <div class="date-badge" id="fridge-date"></div>
+  </div>
+
+  <div class="location-card">
+    <label>Select Fridge</label>
+    <select class="location-select" id="fridge-select" onchange="renderFridgeForm()">
+      <option value="">— Choose a fridge —</option>
+      <option value="fridge_t1">Theatre 1 Fridge</option>
+      <option value="fridge_t2">Theatre 2 Fridge</option>
+      <option value="fridge_tr1">Treatment Room 1 Fridge</option>
+      <option value="fridge_minor">Minor Op Room Fridge</option>
+      <option value="fridge_staff">Staff Fridge</option>
+    </select>
+  </div>
+
+  <div id="fridge-form-area"></div>
+
+</div>
+
+<!-- ═══════════════════ FLUID WARMER TAB ═══════════════════ -->
+<div id="tab-fluid" class="tab-panel">
+
+  <div class="section-header">
+    <div class="section-title">Fluid Warmer Check</div>
+    <div class="date-badge" id="fluid-date"></div>
+  </div>
+
+  <div id="fluid-form-area"></div>
+
+</div>
+
+<!-- ═══════════════════ RECORDS TAB ═══════════════════ -->
+<div id="tab-records" class="tab-panel">
+  <div class="section-header">
+    <div class="section-title">Submitted Records</div>
+    <div class="date-badge" id="records-date"></div>
+  </div>
+  <div id="records-list-area"><p class="no-records">No records submitted yet today.</p></div>
+</div>
+
+<!-- ═══════════════════ HAND HYGIENE TAB ═══════════════════ -->
+<div id="tab-hygiene" class="tab-panel">
+
+  <div class="section-header">
+    <div class="section-title">Hand Hygiene Audit</div>
+    <div class="date-badge" id="hygiene-date"></div>
+  </div>
+
+  <!-- Auditor + session info -->
+  <div class="checklist-card">
+    <h3>
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      Audit Session
+    </h3>
+    <div class="meta-row" style="margin-top:0; padding-top:0; border-top:none;">
+      <div class="meta-field">
+        <label>Auditor Name</label>
+        <input type="text" id="hh-auditor" placeholder="Print name" />
+      </div>
+      <div class="meta-field">
+        <label>Location / Ward</label>
+        <select id="hh-location">
+          <option value="">— Select —</option>
+          <option>Theatre 1</option>
+          <option>Theatre 2</option>
+          <option>Recovery</option>
+          <option>Store Room</option>
+          <option>Medicines Room</option>
+          <option>Reception / Admin</option>
+        </select>
+      </div>
+      <div class="meta-field">
+        <label>Date</label>
+        <input type="date" id="hh-date" />
+      </div>
+      <div class="meta-field">
+        <label>Shift</label>
+        <select id="hh-shift">
+          <option value="">— Select —</option>
+          <option>Morning</option>
+          <option>Afternoon</option>
+          <option>Evening</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add observation -->
+  <div class="checklist-card">
+    <h3>
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      Add Observation
+    </h3>
+
+    <div class="meta-row" style="margin-top:0; padding-top:0; border-top:none;">
+      <div class="meta-field">
+        <label>Staff Category</label>
+        <select id="hh-staff-cat">
+          <option value="">— Select —</option>
+          <option value="Nurse">Nurse</option>
+          <option value="Doctor">Doctor</option>
+          <option value="ODP">ODP</option>
+          <option value="Support Staff">Support Staff</option>
+        </select>
+      </div>
+      <div class="meta-field">
+        <label>Moment</label>
+        <select id="hh-moment">
+          <option value="">— Select —</option>
+          <option value="1">1 — Before patient contact</option>
+          <option value="2">2 — Before aseptic task</option>
+          <option value="3">3 — After body fluid exposure</option>
+          <option value="4">4 — After patient contact</option>
+          <option value="5">5 — After patient environment</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <label style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--slate);display:block;margin-bottom:8px;">Outcome</label>
+      <div class="outcome-btns">
+        <button class="outcome-btn compliant" id="btn-compliant" onclick="selectOutcome('compliant')">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Compliant
+        </button>
+        <button class="outcome-btn non-compliant" id="btn-non-compliant" onclick="selectOutcome('non-compliant')">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Non-Compliant
+        </button>
+        <button class="outcome-btn missed" id="btn-missed" onclick="selectOutcome('missed')">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Missed
+        </button>
+      </div>
+    </div>
+
+    <button class="submit-btn" style="margin-top:14px;" onclick="addHHObservation()">Add Observation</button>
+  </div>
+
+  <!-- Live tally -->
+  <div class="checklist-card" id="hh-tally-card" style="display:none;">
+    <h3>
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Session Tally
+    </h3>
+
+    <!-- Overall compliance bar -->
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:0.06em;">Overall Compliance</span>
+        <span id="hh-compliance-pct" style="font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--navy);">—</span>
+      </div>
+      <div style="height:8px;background:#eef2f5;border-radius:99px;overflow:hidden;">
+        <div id="hh-compliance-bar" style="height:100%;width:0%;background:var(--green);border-radius:99px;transition:width 0.4s,background 0.4s;"></div>
+      </div>
+    </div>
+
+    <!-- By staff category -->
+    <div id="hh-by-category"></div>
+
+    <!-- Observation log -->
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eef2f5;">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--slate);margin-bottom:8px;">Observation Log</div>
+      <div id="hh-obs-log"></div>
+    </div>
+  </div>
+
+  <!-- Export -->
+  <div id="hh-export-wrap" style="display:none;">
+    <button class="submit-btn" onclick="exportHHCSV()" style="background:var(--navy);">
+      ⬇ Export to CSV (for Excel)
+    </button>
+  </div>
+
+</div>
+
+<!-- ═══════════════════ THEATRE CLEANING TAB ═══════════════════ -->
+<div id="tab-cleaning" class="tab-panel">
+
+  <div class="section-header">
+    <div class="section-title">Theatre Cleaning Record</div>
+    <div class="date-badge" id="cleaning-date"></div>
+  </div>
+
+  <!-- Theatre selector -->
+  <div class="location-card">
+    <label>Select Theatre</label>
+    <select class="location-select" id="cleaning-theatre-select" onchange="renderCleaningForm()">
+      <option value="">— Choose a theatre —</option>
+      <option value="t1">Theatre 1</option>
+      <option value="t2">Theatre 2</option>
+    </select>
+  </div>
+
+  <div id="cleaning-form-area"></div>
+
+</div>
+
+</div><!-- /content -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Date helpers ──────────────────────────────────────────
+function todayStr() {
+  return new Date().toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', year:'numeric' });
+}
+function nowStr() {
+  return new Date().toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+}
+function isoToday() {
+  return new Date().toISOString().slice(0,10);
+}
+document.getElementById('temp-date').textContent = todayStr();
+document.getElementById('fridge-date').textContent = todayStr();
+document.getElementById('fluid-date').textContent = todayStr();
+document.getElementById('records-date').textContent = todayStr();
+document.getElementById('cleaning-date').textContent = todayStr();
+
+// ── Tab switching ─────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'records') renderRecords();
+  if (name === 'fluid') renderFluidForm();
+}
+
+// ── Config: temperature ranges ────────────────────────────
+const TEMP_CONFIG = {
+  store1: {
+    label: 'Store Room 1',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:15, max:25 },
+      { id:'pm', label:'PM Reading', sub:'13:00 – 14:00', min:15, max:25 },
+    ]
+  },
+  store2: {
+    label: 'Store Room 2',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:15, max:25 },
+      { id:'pm', label:'PM Reading', sub:'13:00 – 14:00', min:15, max:25 },
+    ]
+  },
+  theatre1: {
+    label: 'Theatre 1',
+    readings: [
+      { id:'am', label:'Morning Check', sub:'Before first case', min:18, max:22 },
+      { id:'mid', label:'Midday Check', sub:'Between cases', min:18, max:22 },
+      { id:'pm', label:'End of List', sub:'After last case', min:18, max:22 },
+    ]
+  },
+  theatre2: {
+    label: 'Theatre 2',
+    readings: [
+      { id:'am', label:'Morning Check', sub:'Before first case', min:18, max:22 },
+      { id:'mid', label:'Midday Check', sub:'Between cases', min:18, max:22 },
+      { id:'pm', label:'End of List', sub:'After last case', min:18, max:22 },
+    ]
+  },
+  medicines: {
+    label: 'Medicines Room',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:15, max:25 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:15, max:25 },
+    ]
+  }
+};
+
+const FRIDGE_CONFIG = {
+  fridge_t1: {
+    label: 'Theatre 1 Fridge',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:2, max:8 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:2, max:8 },
+    ]
+  },
+  fridge_t2: {
+    label: 'Theatre 2 Fridge',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:2, max:8 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:2, max:8 },
+    ]
+  },
+  fridge_tr1: {
+    label: 'Treatment Room 1 Fridge',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:2, max:8 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:2, max:8 },
+    ]
+  },
+  fridge_minor: {
+    label: 'Minor Op Room Fridge',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:2, max:8 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:2, max:8 },
+    ]
+  },
+  fridge_staff: {
+    label: 'Staff Fridge',
+    readings: [
+      { id:'am', label:'AM Reading', sub:'08:00 – 09:00', min:1, max:5 },
+      { id:'pm', label:'PM Reading', sub:'14:00 – 15:00', min:1, max:5 },
+    ]
+  }
+};
+
+const FLUID_CONFIG = {
+  fw_clinic: {
+    label: 'Clinic Fluid Warmer',
+    readings: [
+      { id:'set',    label:'Set Temperature',    sub:'Target 38–40°C',     min:38, max:42 },
+      { id:'actual', label:'Actual Temperature', sub:'Measured at outlet', min:36, max:42 },
+    ]
+  }
+};
+
+// ── Status logic ──────────────────────────────────────────
+function getStatus(val, min, max) {
+  if (val === '' || val === null) return '';
+  const n = parseFloat(val);
+  if (isNaN(n)) return '';
+  if (n < min - 2 || n > max + 2) return 'fail';
+  if (n < min || n > max) return 'warn';
+  return 'ok';
+}
+
+function onTempInput(inputEl, min, max) {
+  const s = getStatus(inputEl.value, min, max);
+  inputEl.className = 'temp-input ' + s;
+  const dotId = inputEl.id + '-dot';
+  const dot = document.getElementById(dotId);
+  if (dot) dot.className = 'status-dot ' + s;
+  updateSummary();
+}
+
+function updateSummary() {
+  const inputs = document.querySelectorAll('.temp-input');
+  let ok = 0, warn = 0, fail = 0;
+  inputs.forEach(i => {
+    if (i.classList.contains('ok')) ok++;
+    else if (i.classList.contains('warn')) warn++;
+    else if (i.classList.contains('fail')) fail++;
+  });
+  const bar = document.getElementById('summary-bar');
+  if (!bar) return;
+  document.getElementById('sum-ok').textContent = ok;
+  document.getElementById('sum-warn').textContent = warn;
+  document.getElementById('sum-fail').textContent = fail;
+}
+
+// ── Build temperature form ────────────────────────────────
+function renderTempForm() {
+  const loc = document.getElementById('location-select').value;
+  const area = document.getElementById('temp-form-area');
+  if (!loc) { area.innerHTML = ''; return; }
+  const cfg = TEMP_CONFIG[loc];
+
+  area.innerHTML = `
+    <div class="summary-bar" id="summary-bar">
+      <div class="summary-item ok"><span class="count" id="sum-ok">0</span> In Range</div>
+      <div class="summary-item warn"><span class="count" id="sum-warn">0</span> Warning</div>
+      <div class="summary-item fail"><span class="count" id="sum-fail">0</span> Out of Range</div>
+    </div>
+    <div class="checklist-card">
+      <h3>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        ${cfg.label} — Temperature Readings
+      </h3>
+      ${cfg.readings.map(r => `
+        <div class="reading-row">
+          <div class="reading-label">
+            ${r.label}
+            <small>${r.sub} &nbsp;<span class="range-tag">${r.min}–${r.max}°C</span></small>
+          </div>
+          <div class="status-dot" id="temp-${r.id}-dot"></div>
+          <input type="number" step="0.1" placeholder="°C" class="temp-input"
+            id="temp-${r.id}"
+            oninput="onTempInput(this, ${r.min}, ${r.max})"
+          />
+        </div>
+      `).join('')}
+      <div class="meta-row">
+        <div class="meta-field">
+          <label>Checked by</label>
+          <input type="text" placeholder="Print name" id="temp-name" />
+        </div>
+        <div class="meta-field">
+          <label>Time</label>
+          <input type="time" id="temp-time" value="${new Date().toTimeString().slice(0,5)}" />
+        </div>
+        <div class="meta-field notes-field">
+          <label>Actions / Notes</label>
+          <textarea placeholder="Any corrective actions taken…" id="temp-notes"></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitRecord('temperature', '${loc}')">Submit Temperature Record</button>
+  `;
+}
+
+// ── Build fridge form ─────────────────────────────────────
+function renderFridgeForm() {
+  const loc = document.getElementById('fridge-select').value;
+  const area = document.getElementById('fridge-form-area');
+  if (!loc) { area.innerHTML = ''; return; }
+  const cfg = FRIDGE_CONFIG[loc];
+
+  area.innerHTML = `
+    <div class="checklist-card">
+      <h3>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="5" y1="10" x2="19" y2="10"/></svg>
+        ${cfg.label}
+      </h3>
+      ${cfg.readings.map(r => `
+        <div class="reading-row">
+          <div class="reading-label">
+            ${r.label}
+            <small>${r.sub} &nbsp;<span class="range-tag">${r.min}–${r.max}°C</span></small>
+          </div>
+          <div class="status-dot" id="fridge-${r.id}-dot"></div>
+          <input type="number" step="0.1" placeholder="°C" class="temp-input"
+            id="fridge-${r.id}"
+            oninput="onTempInput(this, ${r.min}, ${r.max})"
+          />
+        </div>
+      `).join('')}
+      <div class="meta-row">
+        <div class="meta-field">
+          <label>Checked by</label>
+          <input type="text" placeholder="Print name" id="fridge-name" />
+        </div>
+        <div class="meta-field">
+          <label>Time</label>
+          <input type="time" id="fridge-time" value="${new Date().toTimeString().slice(0,5)}" />
+        </div>
+        <div class="meta-field notes-field">
+          <label>Actions / Notes</label>
+          <textarea placeholder="Any corrective actions taken…" id="fridge-notes"></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitRecord('fridge', '${loc}')">Submit Fridge Record</button>
+  `;
+}
+
+// ── Build fluid warmer form (single clinic unit, auto-rendered) ──
+function renderFluidForm() {
+  const loc = 'fw_clinic';
+  const area = document.getElementById('fluid-form-area');
+  const cfg = FLUID_CONFIG[loc];
+
+  area.innerHTML = `
+    <div class="checklist-card">
+      <h3>
+        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.5 2 3 6.5 3 10c0 4.5 4 8 9 12 5-4 9-7.5 9-12 0-3.5-3.5-8-9-8z"/></svg>
+        Clinic Fluid Warmer
+      </h3>
+      ${cfg.readings.map(r => `
+        <div class="reading-row">
+          <div class="reading-label">
+            ${r.label}
+            <small>${r.sub} &nbsp;<span class="range-tag">${r.min}–${r.max}°C</span></small>
+          </div>
+          <div class="status-dot" id="fluid-${r.id}-dot"></div>
+          <input type="number" step="0.1" placeholder="°C" class="temp-input"
+            id="fluid-${r.id}"
+            oninput="onTempInput(this, ${r.min}, ${r.max})"
+          />
+        </div>
+      `).join('')}
+
+      <div class="reading-row" style="margin-top:14px;padding-top:12px;border-top:1px solid #eef2f5;">
+        <div class="reading-label">
+          Device powered on &amp; plugged in
+          <small>Confirm before use</small>
+        </div>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--slate);cursor:pointer;white-space:nowrap;">
+          <input type="checkbox" id="fw-powered" style="width:17px;height:17px;accent-color:var(--gold);cursor:pointer;" />
+          Confirmed
+        </label>
+      </div>
+
+      <div class="meta-row">
+        <div class="meta-field">
+          <label>Recorded by</label>
+          <input type="text" placeholder="Print name" id="fluid-name" />
+        </div>
+        <div class="meta-field">
+          <label>Time</label>
+          <input type="time" id="fluid-time" value="${new Date().toTimeString().slice(0,5)}" />
+        </div>
+        <div class="meta-field notes-field">
+          <label>Actions / Notes</label>
+          <textarea placeholder="Any corrective actions taken…" id="fluid-notes"></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="submit-btn" onclick="submitRecord('fluid', 'fw_clinic')">Submit Fluid Warmer Record</button>
+  `;
+}
+
+// ── Google Sheets integration ─────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-1TqRUu6B4MczWkryvMN0LSEsAQ9sj7BE7z7Iya2Peswk7HACm9nCtYjlXII8mYn5/exec';
+
+function sendToSheet(payload) {
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(err => console.warn('Sheet sync error:', err));
+}
+
+function dayStr() {
+  return new Date().toLocaleDateString('en-GB', { weekday: 'short' });
+}
+
+function isoDateStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ── Records storage ───────────────────────────────────────
+const records = [];
+
+function submitRecord(type, loc) {
+  const labelMap = { ...TEMP_CONFIG, ...FRIDGE_CONFIG, ...FLUID_CONFIG };
+  const label    = labelMap[loc]?.label || loc;
+  const typeLabel = { temperature:'Temperature', fridge:'Fridge', fluid:'Fluid Warmer' }[type];
+
+  // ── Temperature ──
+  if (type === 'temperature') {
+    const cfg = TEMP_CONFIG[loc];
+    const checkedBy = document.getElementById('temp-name').value;
+    const time      = document.getElementById('temp-time').value;
+    const notes     = document.getElementById('temp-notes').value;
+
+    const readings = cfg.readings.map(r => {
+      const el  = document.getElementById('temp-' + r.id);
+      const val = el ? parseFloat(el.value) : '';
+      const s   = el ? (el.classList.contains('ok') ? 'OK' : el.classList.contains('warn') ? 'Warning' : el.classList.contains('fail') ? 'Out of Range' : '') : '';
+      return { label: r.label, value: val, min: r.min, max: r.max, status: s };
+    });
+
+    const overallStatus = readings.some(r => r.status === 'Out of Range') ? 'fail'
+      : readings.some(r => r.status === 'Warning') ? 'warn' : 'ok';
+
+    sendToSheet({ type: 'temperature', date: isoDateStr(), day: dayStr(),
+      location: label, time, checkedBy, notes, readings });
+
+    records.unshift({ id: Date.now(), type: typeLabel, location: label,
+      status: overallStatus, time, date: todayStr() });
+
+    showToast('✓ Saved to sheet — ' + label);
+    document.getElementById('location-select').value = '';
+    document.getElementById('temp-form-area').innerHTML = '';
+  }
+
+  // ── Fridge ──
+  else if (type === 'fridge') {
+    const cfg = FRIDGE_CONFIG[loc];
+    const checkedBy = document.getElementById('fridge-name').value;
+    const time      = document.getElementById('fridge-time').value;
+    const notes     = document.getElementById('fridge-notes').value;
+
+    const readings = cfg.readings.map(r => {
+      const el  = document.getElementById('fridge-' + r.id);
+      const val = el ? parseFloat(el.value) : '';
+      const s   = el ? (el.classList.contains('ok') ? 'OK' : el.classList.contains('warn') ? 'Warning' : el.classList.contains('fail') ? 'Out of Range' : '') : '';
+      return { label: r.label, value: val, min: r.min, max: r.max, status: s };
+    });
+
+    const overallStatus = readings.some(r => r.status === 'Out of Range') ? 'fail'
+      : readings.some(r => r.status === 'Warning') ? 'warn' : 'ok';
+
+    sendToSheet({ type: 'fridge', date: isoDateStr(), day: dayStr(),
+      location: label, time, checkedBy, notes, readings });
+
+    records.unshift({ id: Date.now(), type: typeLabel, location: label,
+      status: overallStatus, time, date: todayStr() });
+
+    showToast('✓ Saved to sheet — ' + label);
+    document.getElementById('fridge-select').value = '';
+    document.getElementById('fridge-form-area').innerHTML = '';
+  }
+
+  // ── Fluid Warmer ──
+  else if (type === 'fluid') {
+    const setEl    = document.getElementById('fluid-set');
+    const actEl    = document.getElementById('fluid-actual');
+    const setTemp  = setEl ? parseFloat(setEl.value) : '';
+    const actTemp  = actEl ? parseFloat(actEl.value) : '';
+    const powered  = document.getElementById('fw-powered')?.checked || false;
+    const recordedBy = document.getElementById('fluid-name').value;
+    const time     = document.getElementById('fluid-time').value;
+    const notes    = document.getElementById('fluid-notes').value;
+
+    const overallStatus = actEl?.classList.contains('fail') ? 'fail'
+      : actEl?.classList.contains('warn') ? 'warn' : 'ok';
+
+    sendToSheet({ type: 'fluid', date: isoDateStr(), day: dayStr(),
+      time, setTemp, actualTemp: actTemp, status: overallStatus,
+      poweredOn: powered, recordedBy, notes });
+
+    records.unshift({ id: Date.now(), type: typeLabel, location: label,
+      status: overallStatus, time, date: todayStr() });
+
+    showToast('✓ Saved to sheet — Fluid Warmer');
+    renderFluidForm();
+  }
+}
+
+function renderRecords() {
+  const area = document.getElementById('records-list-area');
+  if (!records.length) { area.innerHTML = '<p class="no-records">No records submitted yet today.</p>'; return; }
+  area.innerHTML = `<div class="records-list">${records.map(r => {
+    const statusLabel = r.status === 'ok' ? 'OK'
+      : r.status === 'warn' ? 'Warning'
+      : r.status === 'fail' ? 'Out of Range / Incomplete'
+      : r.status === 'niu'  ? 'Not in Use' : r.status;
+    const sub = r.phase ? `${r.phase}${r.completion ? ' · ' + r.completion : ''}` : r.location;
+    return `
+    <div class="record-item">
+      <div class="rec-left">
+        <h4>${r.type} — ${r.location}</h4>
+        <span>${r.date} &nbsp;·&nbsp; ${r.time}${r.phase ? ' &nbsp;·&nbsp; ' + r.phase : ''}</span>
+      </div>
+      <span class="rec-status ${r.status === 'niu' ? 'warn' : r.status}">${statusLabel}</span>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+
+// ── Hand Hygiene ──────────────────────────────────────────
+document.getElementById('hygiene-date').textContent = todayStr();
+
+// Pre-fill today's date
+const hhDateInput = document.getElementById('hh-date');
+if (hhDateInput) hhDateInput.value = new Date().toISOString().slice(0,10);
+
+let hhSelectedOutcome = null;
+const hhObservations = [];
+
+const MOMENT_LABELS = {
+  '1': 'Before patient contact',
+  '2': 'Before aseptic task',
+  '3': 'After body fluid exposure',
+  '4': 'After patient contact',
+  '5': 'After patient environment'
+};
+
+function selectOutcome(outcome) {
+  hhSelectedOutcome = outcome;
+  ['compliant','non-compliant','missed'].forEach(o => {
+    const btn = document.getElementById('btn-' + o);
+    btn.classList.toggle('selected', o === outcome);
+  });
+}
+
+function addHHObservation() {
+  const cat  = document.getElementById('hh-staff-cat').value;
+  const mom  = document.getElementById('hh-moment').value;
+
+  if (!cat)  { showToast('⚠ Select a staff category'); return; }
+  if (!mom)  { showToast('⚠ Select a moment'); return; }
+  if (!hhSelectedOutcome) { showToast('⚠ Select an outcome'); return; }
+
+  hhObservations.push({
+    id: Date.now(),
+    cat,
+    moment: mom,
+    momentLabel: MOMENT_LABELS[mom],
+    outcome: hhSelectedOutcome,
+    time: nowStr()
+  });
+
+  // Reset inputs
+  document.getElementById('hh-staff-cat').value = '';
+  document.getElementById('hh-moment').value = '';
+  hhSelectedOutcome = null;
+  ['compliant','non-compliant','missed'].forEach(o =>
+    document.getElementById('btn-' + o).classList.remove('selected'));
+
+  updateHHTally();
+  showToast('✓ Observation recorded');
+}
+
+function updateHHTally() {
+  document.getElementById('hh-tally-card').style.display = 'block';
+  document.getElementById('hh-export-wrap').style.display = 'block';
+
+  const total = hhObservations.length;
+  const compliant = hhObservations.filter(o => o.outcome === 'compliant').length;
+  const pct = total ? Math.round((compliant / total) * 100) : 0;
+
+  // Overall bar
+  const bar = document.getElementById('hh-compliance-bar');
+  bar.style.width = pct + '%';
+  bar.style.background = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+  const pctEl = document.getElementById('hh-compliance-pct');
+  pctEl.textContent = total ? pct + '%' : '—';
+  pctEl.style.color = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--amber)' : 'var(--red)';
+
+  // By category
+  const cats = ['Nurse','Doctor','ODP','Support Staff'];
+  const catHTML = cats.map(cat => {
+    const obs = hhObservations.filter(o => o.cat === cat);
+    if (!obs.length) return '';
+    const comp = obs.filter(o => o.outcome === 'compliant').length;
+    const p = Math.round((comp / obs.length) * 100);
+    const barCol = p >= 80 ? 'var(--green)' : p >= 60 ? 'var(--amber)' : 'var(--red)';
+    const pctCol = p >= 80 ? '#1a7a44' : p >= 60 ? '#9a6010' : '#c0392b';
+    return `<div class="hh-cat-row">
+      <div class="hh-cat-label">${cat}</div>
+      <div class="hh-cat-bar-wrap"><div class="hh-cat-bar" style="width:${p}%;background:${barCol};"></div></div>
+      <div class="hh-cat-pct" style="color:${pctCol};">${p}%</div>
+      <div class="hh-cat-count">${comp}/${obs.length}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('hh-by-category').innerHTML = catHTML || '';
+
+  // Observation log (newest first)
+  const logHTML = [...hhObservations].reverse().map((o, i) => `
+    <div class="obs-row">
+      <div class="obs-num">${hhObservations.length - i}</div>
+      <div class="obs-cat">${o.cat}</div>
+      <div class="obs-moment">M${o.moment} — ${o.momentLabel}</div>
+      <span class="obs-badge ${o.outcome}">${o.outcome === 'compliant' ? '✓ Compliant' : o.outcome === 'non-compliant' ? '✗ Non-compliant' : '! Missed'}</span>
+      <button class="obs-del" onclick="deleteObs(${o.id})" title="Delete">×</button>
+    </div>
+  `).join('');
+  document.getElementById('hh-obs-log').innerHTML = logHTML || '<p style="font-size:12px;color:var(--slate);">No observations yet.</p>';
+}
+
+function deleteObs(id) {
+  const idx = hhObservations.findIndex(o => o.id === id);
+  if (idx > -1) hhObservations.splice(idx, 1);
+  if (hhObservations.length) updateHHTally();
+  else {
+    document.getElementById('hh-tally-card').style.display = 'none';
+    document.getElementById('hh-export-wrap').style.display = 'none';
+  }
+}
+
+function exportHHCSV() {
+  const auditor  = document.getElementById('hh-auditor').value || 'Unknown';
+  const location = document.getElementById('hh-location').value || 'Unknown';
+  const date     = document.getElementById('hh-date').value || isoDateStr();
+  const shift    = document.getElementById('hh-shift').value || 'Unknown';
+
+  // Push all observations to Google Sheet
+  sendToSheet({
+    type: 'hh',
+    date, shift, location, auditor,
+    observations: hhObservations.map(o => ({
+      cat: o.cat, moment: o.moment, momentLabel: o.momentLabel,
+      outcome: o.outcome, time: o.time
+    }))
+  });
+
+  // Also export CSV for local backup
+  const header = 'Date,Shift,Location,Auditor,Observation#,Staff Category,Moment#,Moment Description,Outcome,Time\n';
+  const rows = hhObservations.map((o, i) =>
+    [date, shift, location, auditor, i+1, o.cat, o.moment, `"${o.momentLabel}"`, o.outcome, o.time].join(',')
+  ).join('\n');
+
+  const blob = new Blob([header + rows], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `HH_Audit_${date}_${location.replace(/\s+/g,'_')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Saved to sheet + CSV exported');
+}
+
+
+// ── Theatre Cleaning ──────────────────────────────────────
+const CLEANING_ITEMS = {
+  pre: [
+    'Theatre surfaces wiped down with approved disinfectant',
+    'Operating table cleaned and disinfected',
+    'Anaesthetic equipment surfaces cleaned',
+    'All equipment checked and in working order',
+    'Floor mopped with approved solution',
+    'Waste bins lined and in place',
+    'Sharps bins checked and in place',
+    'Instrument trolley cleaned and prepared',
+    'Suction equipment checked and cleaned',
+    'Diathermy plate and leads cleaned',
+    'Warm air blanket / Bair Hugger cleaned',
+    'Fluid warmer checked and powered on',
+    'Theatre lights cleaned and positioned',
+    'Hand hygiene products stocked (soap, gel)',
+  ],
+  post: [
+    'All used instruments removed and sent for decontamination',
+    'Sharps safely disposed of in sharps bin',
+    'Clinical waste removed and bagged correctly',
+    'Operating table cleaned and disinfected',
+    'All theatre surfaces wiped with approved disinfectant',
+    'Suction canister emptied and cleaned',
+    'Anaesthetic equipment surfaces cleaned',
+    'Floor mopped with approved solution',
+    'Spillages managed per infection control policy',
+    'Single-use items disposed of appropriately',
+    'Reusable equipment cleaned and stored',
+    'Waste bins emptied and relined',
+    'Theatre doors left closed',
+    'Ventilation and temperature returned to normal',
+  ]
+};
+
+let cleaningPhase = 'pre'; // 'pre' | 'post'
+
+function renderCleaningForm() {
+  const theatre = document.getElementById('cleaning-theatre-select').value;
+  const area = document.getElementById('cleaning-form-area');
+  if (!theatre) { area.innerHTML = ''; return; }
+  const label = theatre === 't1' ? 'Theatre 1' : 'Theatre 2';
+
+  area.innerHTML = `
+    <!-- Not in use section -->
+    <div class="not-in-use-section">
+      <h4>📅 Mark Dates as Theatre Not in Use</h4>
+      <div class="date-range-row">
+        <div>
+          <label>From</label>
+          <input type="date" id="niu-from" value="${isoToday()}" />
+        </div>
+        <div>
+          <label>To</label>
+          <input type="date" id="niu-to" value="${isoToday()}" />
+        </div>
+      </div>
+      <button class="niu-btn" onclick="submitNotInUse('${theatre}', '${label}')">Mark as Not in Use</button>
+    </div>
+
+    <!-- Phase toggle -->
+    <div class="checklist-card">
+      <h3>
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        ${label} — Cleaning Checklist
+      </h3>
+
+      <div class="cleaning-phase-toggle">
+        <button class="phase-btn active" id="phase-btn-pre" onclick="switchPhase('pre')">Pre-Surgery</button>
+        <button class="phase-btn" id="phase-btn-post" onclick="switchPhase('post')">Post-Surgery</button>
+      </div>
+
+      <div id="cleaning-items-area">
+        ${renderCleaningItems('pre')}
+      </div>
+
+      <div class="meta-row">
+        <div class="meta-field">
+          <label>Date of List</label>
+          <input type="date" id="cleaning-date-input" value="${isoToday()}" />
+        </div>
+        <div class="meta-field">
+          <label>Completed by</label>
+          <input type="text" placeholder="Print name" id="cleaning-name" />
+        </div>
+        <div class="meta-field">
+          <label>Time</label>
+          <input type="time" id="cleaning-time" value="${new Date().toTimeString().slice(0,5)}" />
+        </div>
+        <div class="meta-field notes-field">
+          <label>Notes / Actions</label>
+          <textarea placeholder="Any issues noted…" id="cleaning-notes"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <button class="submit-btn" onclick="submitCleaning('${theatre}', '${label}')">Submit Cleaning Record</button>
+  `;
+  cleaningPhase = 'pre';
+}
+
+function renderCleaningItems(phase) {
+  return CLEANING_ITEMS[phase].map((item, i) => `
+    <div class="clean-item">
+      <div class="clean-item-label">${item}</div>
+      <input type="checkbox" class="clean-check" id="ci-${phase}-${i}" />
+    </div>
+  `).join('');
+}
+
+function switchPhase(phase) {
+  cleaningPhase = phase;
+  document.getElementById('cleaning-items-area').innerHTML = renderCleaningItems(phase);
+  document.getElementById('phase-btn-pre').classList.toggle('active', phase === 'pre');
+  document.getElementById('phase-btn-post').classList.toggle('active', phase === 'post');
+}
+
+function submitNotInUse(theatreKey, theatreLabel) {
+  const from = document.getElementById('niu-from').value;
+  const to   = document.getElementById('niu-to').value;
+  if (!from || !to) { showToast('⚠ Select both dates'); return; }
+  if (to < from)    { showToast('⚠ "To" date must be after "From"'); return; }
+
+  const dates = [];
+  let cur = new Date(from);
+  const end = new Date(to);
+  while (cur <= end) {
+    dates.push(cur.toISOString().slice(0,10));
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  // Push to Google Sheet
+  sendToSheet({ type: 'cleaning', theatre: theatreKey, notInUse: true, dates });
+
+  dates.forEach(d => {
+    records.unshift({
+      id: Date.now() + Math.random(),
+      type: 'Theatre Cleaning',
+      location: theatreLabel,
+      status: 'niu',
+      phase: 'Not in Use',
+      date: new Date(d).toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', year:'numeric' }),
+      time: '—'
+    });
+  });
+
+  showToast(`✓ Saved to sheet — ${dates.length} day(s) Not in Use — ${theatreLabel}`);
+}
+
+function submitCleaning(theatreKey, theatreLabel) {
+  const name  = document.getElementById('cleaning-name').value;
+  if (!name) { showToast('⚠ Enter name before submitting'); return; }
+
+  const items = CLEANING_ITEMS[cleaningPhase];
+  const checked = items.filter((_, i) => {
+    const el = document.getElementById(`ci-${cleaningPhase}-${i}`);
+    return el && el.checked;
+  }).length;
+  const pct    = Math.round((checked / items.length) * 100);
+  const status = pct === 100 ? 'ok' : pct >= 75 ? 'warn' : 'fail';
+
+  const listDate = document.getElementById('cleaning-date-input').value;
+  const displayDate = listDate
+    ? new Date(listDate).toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', year:'numeric' })
+    : todayStr();
+  const time  = document.getElementById('cleaning-time').value;
+  const notes = document.getElementById('cleaning-notes').value;
+  const phase = cleaningPhase === 'pre' ? 'Pre-Surgery' : 'Post-Surgery';
+
+  // Push to Google Sheet
+  sendToSheet({
+    type: 'cleaning', theatre: theatreKey, notInUse: false,
+    date: listDate || isoDateStr(),
+    day: listDate ? new Date(listDate).toLocaleDateString('en-GB',{weekday:'short'}) : dayStr(),
+    phase, status, checkedCount: checked, totalItems: items.length,
+    completionPct: pct, completedBy: name, time, notes
+  });
+
+  records.unshift({
+    id: Date.now(), type: 'Theatre Cleaning', location: theatreLabel,
+    status, phase,
+    completion: `${checked}/${items.length} (${pct}%)`,
+    date: displayDate, time, by: name, notes
+  });
+
+  showToast(`✓ Saved to sheet — ${theatreLabel} ${phase} — ${pct}% complete`);
+  document.getElementById('cleaning-theatre-select').value = '';
+  document.getElementById('cleaning-form-area').innerHTML = '';
+}
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
