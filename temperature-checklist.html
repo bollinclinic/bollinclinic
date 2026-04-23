@@ -753,8 +753,10 @@
           <option>Theatre 1</option>
           <option>Theatre 2</option>
           <option>Recovery</option>
-          <option>Store Room</option>
-          <option>Medicines Room</option>
+          <option>Ward</option>
+          <option>Treatment Room 1</option>
+          <option>Treatment Room 2</option>
+          <option>Minor Op Room</option>
           <option>Reception / Admin</option>
         </select>
       </div>
@@ -854,10 +856,13 @@
     </div>
   </div>
 
-  <!-- Export -->
+  <!-- Submit / Export -->
   <div id="hh-export-wrap" style="display:none;">
+    <button class="submit-btn" onclick="submitHHToSheet()" style="margin-bottom:8px;">
+      ✓ Submit to Google Sheet
+    </button>
     <button class="submit-btn" onclick="exportHHCSV()" style="background:var(--navy);">
-      ⬇ Export to CSV (for Excel)
+      ⬇ Export CSV (local backup)
     </button>
   </div>
 
@@ -1432,23 +1437,42 @@ function deleteObs(id) {
   }
 }
 
-function exportHHCSV() {
-  const auditor  = document.getElementById('hh-auditor').value || 'Unknown';
-  const location = document.getElementById('hh-location').value || 'Unknown';
-  const date     = document.getElementById('hh-date').value || isoDateStr();
-  const shift    = document.getElementById('hh-shift').value || 'Unknown';
+function submitHHToSheet() {
+  const auditor  = document.getElementById('hh-auditor').value;
+  const location = document.getElementById('hh-location').value;
+  const date     = document.getElementById('hh-date').value;
+  const shift    = document.getElementById('hh-shift').value;
 
-  // Push all observations to Google Sheet
+  if (!auditor)  { showToast('⚠ Enter auditor name'); return; }
+  if (!location) { showToast('⚠ Select a location'); return; }
+  if (!date)     { showToast('⚠ Select a date'); return; }
+  if (!shift)    { showToast('⚠ Select a shift'); return; }
+  if (!hhObservations.length) { showToast('⚠ No observations to submit'); return; }
+
   sendToSheet({
     type: 'hh',
-    date, shift, location, auditor,
+    date,
+    shift,
+    location,
+    auditor,
     observations: hhObservations.map(o => ({
-      cat: o.cat, moment: o.moment, momentLabel: o.momentLabel,
-      outcome: o.outcome, time: o.time
+      cat: o.cat,
+      moment: o.moment,
+      momentLabel: o.momentLabel,
+      outcome: o.outcome,
+      time: o.time
     }))
   });
 
-  // Also export CSV for local backup
+  showToast('✓ ' + hhObservations.length + ' observations sent to Google Sheet');
+}
+
+function exportHHCSV() {
+  const auditor  = document.getElementById('hh-auditor').value || 'Unknown';
+  const location = document.getElementById('hh-location').value || 'Unknown';
+  const date     = document.getElementById('hh-date').value || isoToday();
+  const shift    = document.getElementById('hh-shift').value || 'Unknown';
+
   const header = 'Date,Shift,Location,Auditor,Observation#,Staff Category,Moment#,Moment Description,Outcome,Time\n';
   const rows = hhObservations.map((o, i) =>
     [date, shift, location, auditor, i+1, o.cat, o.moment, `"${o.momentLabel}"`, o.outcome, o.time].join(',')
@@ -1461,7 +1485,7 @@ function exportHHCSV() {
   a.download = `HH_Audit_${date}_${location.replace(/\s+/g,'_')}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('✓ Saved to sheet + CSV exported');
+  showToast('✓ CSV exported');
 }
 
 
